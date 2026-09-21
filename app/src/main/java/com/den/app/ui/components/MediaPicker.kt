@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
 import java.io.File
@@ -71,10 +72,10 @@ fun MediaPickerBar(
         pendingCapture = null
         importOrDiscard(file, saved, "image/jpeg")
     }
-    val record = rememberLauncherForActivityResult(ActivityResultContracts.TakeVideo()) { saved ->
+    val record = rememberLauncherForActivityResult(ActivityResultContracts.TakeVideo()) { result ->
         val file = pendingCapture
         pendingCapture = null
-        importOrDiscard(file, saved, "video/mp4")
+        importOrDiscard(file, result != null, "video/mp4")
     }
 
     Row(
@@ -82,7 +83,7 @@ fun MediaPickerBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AssistChip(
-            onClick = { images.launch() },
+            onClick = { images.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             label = { Text("Photos") },
             leadingIcon = { Icon(Icons.Filled.PhotoCamera, contentDescription = null) },
         )

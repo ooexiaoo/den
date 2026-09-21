@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.den.app.data.model.Label
-import com.den.app.ui.theme.paletteColors
 
 @Composable
 fun LabelEditorDialog(

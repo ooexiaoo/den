@@ -45,7 +45,10 @@ class BackupManager(
 
     fun listBackups(): List<File> = files()
 
-    suspend fun isDue(cfg: Settings = currentSettings()): Boolean = cfg.backupEnabled && isAutoBackupDue(cfg)
+    suspend fun isDue(cfg: Settings? = null): Boolean {
+        val settings = cfg ?: currentSettings()
+        return settings.backupEnabled && isAutoBackupDue(settings)
+    }
 
     private suspend fun isAutoBackupDue(cfg: Settings): Boolean {
         if (!cfg.backupEnabled) return false

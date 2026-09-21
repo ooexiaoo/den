@@ -42,7 +42,7 @@ import com.den.app.ui.screens.TaskDetailScreen
 import com.den.app.ui.screens.TaskEditScreen
 import com.den.app.ui.screens.TasksScreen
 
-private val Routes = object {
+private object Routes {
     const val TASKS = "tasks"
     const val TASK_DETAIL = "task/{taskId}"
     const val TASK_EDIT = "taskEdit?taskId={taskId}"

@@ -1,8 +1,15 @@
+@file:OptIn(ExperimentalGlanceApi::class)
+
 package com.den.app.widget
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -13,6 +20,7 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
@@ -21,26 +29,22 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.weight
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.compose.runtime.Composable
 import com.den.app.AppGraph
 import com.den.app.MainActivity
 import com.den.app.data.model.Task
 import com.den.app.util.Dates
-import androidx.glance.unit.dp
-import androidx.glance.unit.sp
 
-private val WidgetBg = ColorProvider(0xFF1B1B1F)
-private val WidgetFg = ColorProvider(0xFFF4F4F5)
-private val WidgetMuted = ColorProvider(0xFFB0B0B6)
-private val WidgetAccent = ColorProvider(0xFF8AB4F8)
-private val WidgetDone = ColorProvider(0xFFEDEDED)
+private val WidgetBg = ColorProvider(0xFF1B1B1FuL)
+private val WidgetFg = ColorProvider(0xFFF4F4F5uL)
+private val WidgetMuted = ColorProvider(0xFFB0B0B6uL)
+private val WidgetAccent = ColorProvider(0xFF8AB4F8uL)
+private val WidgetDone = ColorProvider(0xFFEDEDEDuL)
 
 class TasksWidget : GlanceAppWidget() {
 
@@ -79,7 +83,7 @@ class TasksWidgetReceiver : GlanceAppWidgetReceiver() {
 }
 
 @Composable
-private fun WidgetContent(tasks: List<Task>, onOpenApp: () -> Unit) {
+private fun WidgetContent(tasks: List<Task>, onOpenApp: Action) {
     val today = Dates.startOfDay(Dates.now())
     Column(
         modifier = GlanceModifier
@@ -88,7 +92,7 @@ private fun WidgetContent(tasks: List<Task>, onOpenApp: () -> Unit) {
             .padding(16.dp),
     ) {
         Row(modifier = GlanceModifier.fillMaxWidth().clickable(onOpenApp)) {
-            Column(modifier = GlanceModifier.weight(1f)) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
                     text = "Today",
                     style = TextStyle(color = WidgetFg, fontSize = 18.sp, fontWeight = FontWeight.Bold),
@@ -125,7 +129,7 @@ private fun WidgetContent(tasks: List<Task>, onOpenApp: () -> Unit) {
                 text = "Open Den",
                 style = TextStyle(color = WidgetAccent, fontSize = 13.sp, fontWeight = FontWeight.Bold),
             )
-            Spacer(GlanceModifier.weight(1f))
+            Spacer(GlanceModifier.defaultWeight())
             Text(
                 text = "›",
                 style = TextStyle(color = WidgetAccent, fontSize = 16.sp),
@@ -135,7 +139,7 @@ private fun WidgetContent(tasks: List<Task>, onOpenApp: () -> Unit) {
 }
 
 @Composable
-private fun TaskRow(task: Task, onOpenApp: () -> Unit) {
+private fun TaskRow(task: Task, onOpenApp: Action) {
     val dueLabel = task.dueAt?.let { Dates.humanDay(it, hasTime = false) } ?: ""
     Row(
         modifier = GlanceModifier
@@ -160,14 +164,14 @@ private fun TaskRow(task: Task, onOpenApp: () -> Unit) {
             )
             Spacer(GlanceModifier.width(8.dp))
         }
-        Column(modifier = GlanceModifier.weight(1f).clickable(onOpenApp)) {
+        Column(modifier = GlanceModifier.defaultWeight().clickable(onOpenApp)) {
             Text(
                 text = task.title,
                 maxLines = 1,
                 style = TextStyle(
                     color = WidgetFg,
                     fontSize = 13.sp,
-                    decoration = if (task.completed) TextDecoration.LineThrough else null,
+                    textDecoration = if (task.completed) TextDecoration.LineThrough else null,
                 ),
             )
             if (dueLabel.isNotEmpty()) {

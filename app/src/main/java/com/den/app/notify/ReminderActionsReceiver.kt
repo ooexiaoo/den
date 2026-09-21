@@ -36,7 +36,7 @@ class ReminderActionsReceiver : BroadcastReceiver() {
     }
 
     private suspend fun complete(context: Context, taskId: Long) {
-        val container = AppGraph.container
+        val container = AppGraph.container ?: return
         val task = container.taskRepo.getTask(taskId)
         val helper = NotificationHelper(context)
         if (task == null) {

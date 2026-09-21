@@ -67,7 +67,7 @@ class PortManager(
         prettyPrint = true
     }
 
-    fun exportJson(): String {
+    suspend fun exportJson(): String {
         val now = System.currentTimeMillis()
         val payload = PortPayload(
             exportedAt = now,
@@ -111,7 +111,7 @@ class PortManager(
         return json.encodeToString(PortPayload.serializer(), payload)
     }
 
-    fun importJson(text: String): ImportSummary {
+    suspend fun importJson(text: String): ImportSummary {
         val payload = json.decodeFromString<PortPayload>(text)
 
         val labelDao = db.labelDao()

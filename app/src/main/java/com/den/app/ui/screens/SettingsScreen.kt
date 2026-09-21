@@ -501,6 +501,7 @@ fun SettingsScreen(
                                 pendingRestoreUri?.let { uri -> vm.restoreBackup(uri, phrase) }
                                 pendingRestoreUri = null
                             }
+                            null -> {}
                         }
                     },
                 ) { Text("OK") }
