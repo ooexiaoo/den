@@ -1,0 +1,19 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.jks
+*.keystore
+keystore.jks
+/app/release/
+app/schemas/
+*.apk
+*.aab
+
+# project local docs
+/todo.md

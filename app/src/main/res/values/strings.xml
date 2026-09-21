@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Den</string>
+
+    <string name="channel_reminders_name">Task reminders</string>
+    <string name="channel_reminders_desc">Alerts for your scheduled task reminders</string>
+    <string name="channel_backups_name">Backups</string>
+    <string name="channel_backups_desc">Encrypted auto-backup status</string>
+</resources>
