@@ -12,8 +12,7 @@ import com.den.app.data.model.NoteLabelCrossRef
 import com.den.app.data.model.Subtask
 import com.den.app.data.model.Task
 import com.den.app.data.model.TaskLabelCrossRef
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportOpenHelperFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 @Database(
     entities = [
@@ -41,9 +40,9 @@ abstract class DenDatabase : RoomDatabase() {
 
         fun build(context: Context, passphrase: String): DenDatabase {
             // Load the SQLCipher native library (no-op if already loaded).
-            SQLiteDatabase.loadLibs(context)
+            System.loadLibrary("sqlcipher")
             val factory: SupportSQLiteOpenHelper.Factory =
-                SupportOpenHelperFactory(context, passphrase.toByteArray(Charsets.UTF_8))
+                SupportOpenHelperFactory(passphrase.toByteArray(Charsets.UTF_8))
             return Room.databaseBuilder(context, DenDatabase::class.java, DB_NAME)
                 .openHelperFactory(factory)
                 .build()
