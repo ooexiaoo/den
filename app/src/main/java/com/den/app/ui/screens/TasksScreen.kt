@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -33,11 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
+import com.den.app.data.model.Task
 import com.den.app.ui.components.EmptyState
+import com.den.app.ui.components.MonthCalendar
 import com.den.app.ui.components.TaskRow
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskFilter
 import com.den.app.ui.viewmodel.TasksViewModel
+import com.den.app.util.Dates
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,8 +57,23 @@ fun TasksScreen(
     val filter by vm.filter.collectAsState()
     val search by vm.search.collectAsState()
     val settings by vm.settings.collectAsState()
+    val allTasks by vm.allTasks.collectAsState()
 
     var searching by remember { mutableStateOf(false) }
+    var calendarMode by remember { mutableStateOf(false) }
+    var selectedDayMillis by remember { mutableStateOf(Dates.startOfDay(Dates.now())) }
+    var monthOffset by remember { mutableStateOf(0L) }
+
+    val todayMillis = Dates.startOfDay(Dates.now())
+    val selectedMonth = remember(monthOffset) { Dates.shiftMonth(Dates.startOfDay(Dates.now()), monthOffset) }
+    val taskDays = remember(allTasks) {
+        allTasks.mapNotNull { Dates.startOfDay(it.dueAt ?: return@mapNotNull null) }.toSet()
+    }
+    val dayTasks = remember(allTasks, selectedDayMillis) {
+        allTasks
+            .filter { task -> task.dueAt != null && Dates.startOfDay(task.dueAt!!) == selectedDayMillis }
+            .sortedWith(compareByDescending<Task> { it.priority }.thenByDescending { it.createdAt })
+    }
 
     Scaffold(
         topBar = {
@@ -72,8 +92,16 @@ fun TasksScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { searching = !searching; if (!searching) vm.setSearch("") }) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                    IconButton(onClick = { calendarMode = !calendarMode; searching = false; vm.setSearch("") }) {
+                        Icon(
+                            imageVector = if (calendarMode) Icons.Filled.ViewList else Icons.Filled.Event,
+                            contentDescription = if (calendarMode) "Show list" else "Show calendar",
+                        )
+                    }
+                    if (!calendarMode) {
+                        IconButton(onClick = { searching = !searching; if (!searching) vm.setSearch("") }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -88,61 +116,79 @@ fun TasksScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = filter == TaskFilter.ALL,
-                    onClick = { vm.setFilter(TaskFilter.ALL) },
-                    label = { Text("Open") },
+            if (calendarMode) {
+                MonthCalendar(
+                    month = selectedMonth,
+                    selected = Dates.toLocalDate(selectedDayMillis),
+                    today = Dates.toLocalDate(todayMillis),
+                    taskDays = taskDays,
+                    onSelect = { selectedDayMillis = Dates.dayMillis(it) },
+                    onShiftMonth = { delta -> monthOffset += delta },
                 )
-                FilterChip(
-                    selected = filter == TaskFilter.TODAY,
-                    onClick = { vm.setFilter(TaskFilter.TODAY) },
-                    label = { Text("Today") },
+                Text(
+                    text = Dates.humanDay(selectedDayMillis, hasTime = false),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
-                FilterChip(
-                    selected = filter == TaskFilter.UPCOMING,
-                    onClick = { vm.setFilter(TaskFilter.UPCOMING) },
-                    label = { Text("Upcoming") },
-                )
-                FilterChip(
-                    selected = filter == TaskFilter.DONE,
-                    onClick = { vm.setFilter(TaskFilter.DONE) },
-                    label = { Text("Done") },
-                )
-            }
-
-            if (tasks.isEmpty()) {
-                EmptyState(
-                    title = when (filter) {
-                        TaskFilter.DONE -> "No completed tasks yet"
-                        TaskFilter.TODAY -> "Nothing due today"
-                        TaskFilter.UPCOMING -> "Nothing scheduled"
-                        TaskFilter.ALL -> "All clear — add your first task"
-                    },
-                    subtitle = if (search.isNotBlank()) "No results for \"$search\"" else "Tap + to create a task",
-                )
+                if (dayTasks.isEmpty()) {
+                    EmptyState(
+                        title = "Nothing here",
+                        subtitle = "Tap + to add a task for this day",
+                    )
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 96.dp),
+                    ) {
+                        items(dayTasks, key = { it.id }) { task ->
+                            TaskRow(
+                                task = task,
+                                labels = emptyList(),
+                                subtasksDone = 0,
+                                subtasksTotal = 0,
+                                onClick = { onOpenTask(task.id) },
+                                onCheck = {
+                                    if (task.completed) vm.uncomplete(task) else if (settings.ratingOnComplete) onCompleteTask(task.id) else vm.complete(task, null, null)
+                                },
+                            )
+                        }
+                    }
+                }
             } else {
-                LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
-                    items(tasks, key = { it.task.id }) { item ->
-                        TaskRow(
-                            task = item.task,
-                            labels = emptyList(),
-                            subtasksDone = item.done,
-                            subtasksTotal = item.total,
-                            onClick = { onOpenTask(item.task.id) },
-                            onCheck = {
-                                if (item.task.completed) {
-                                    vm.uncomplete(item.task)
-                                } else if (settings.ratingOnComplete) {
-                                    onCompleteTask(item.task.id)
-                                } else {
-                                    vm.complete(item.task, null, null)
-                                }
-                            },
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(selected = filter == TaskFilter.ALL, onClick = { vm.setFilter(TaskFilter.ALL) }, label = { Text("Open") })
+                    FilterChip(selected = filter == TaskFilter.TODAY, onClick = { vm.setFilter(TaskFilter.TODAY) }, label = { Text("Today") })
+                    FilterChip(selected = filter == TaskFilter.UPCOMING, onClick = { vm.setFilter(TaskFilter.UPCOMING) }, label = { Text("Upcoming") })
+                    FilterChip(selected = filter == TaskFilter.DONE, onClick = { vm.setFilter(TaskFilter.DONE) }, label = { Text("Done") })
+                }
+
+                if (tasks.isEmpty()) {
+                    EmptyState(
+                        title = when (filter) {
+                            TaskFilter.DONE -> "No completed tasks yet"
+                            TaskFilter.TODAY -> "Nothing due today"
+                            TaskFilter.UPCOMING -> "Nothing scheduled"
+                            TaskFilter.ALL -> "All clear — add your first task"
+                        },
+                        subtitle = if (search.isNotBlank()) "No results for \"$search\"" else "Tap + to create a task",
+                    )
+                } else {
+                    LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+                        items(tasks, key = { it.task.id }) { item ->
+                            TaskRow(
+                                task = item.task,
+                                labels = emptyList(),
+                                subtasksDone = item.done,
+                                subtasksTotal = item.total,
+                                onClick = { onOpenTask(item.task.id) },
+                                onCheck = {
+                                    if (item.task.completed) vm.uncomplete(item.task)
+                                    else if (settings.ratingOnComplete) onCompleteTask(item.task.id) else vm.complete(item.task, null, null)
+                                },
+                            )
+                        }
                     }
                 }
             }

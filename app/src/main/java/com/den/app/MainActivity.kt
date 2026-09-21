@@ -1,9 +1,8 @@
 package com.den.app
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.den.app.settings.Settings
@@ -21,7 +21,7 @@ import com.den.app.ui.screens.OnboardingScreen
 import com.den.app.ui.screens.PasscodeScreen
 import com.den.app.ui.theme.DenTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -78,7 +78,7 @@ private fun MainGate(
 
     when {
         !settings.onboardingDone -> OnboardingScreen(container) { }
-        passcodeEnabled && !unlocked -> PasscodeScreen(container) { unlocked = true }
+        passcodeEnabled && !unlocked -> PasscodeScreen(container, settings.biometricEnabled) { unlocked = true }
         else -> AppNav(
             container = container,
             initialTaskId = if (handledDeepLink) null else initialTaskId,

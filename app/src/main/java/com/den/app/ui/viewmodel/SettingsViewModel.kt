@@ -42,6 +42,7 @@ class SettingsViewModel(container: AppContainer) : ViewModel() {
     fun setDarkMode(v: Int) = safe { settingsStore.setDarkMode(v) }
     fun setDynamicColor(v: Boolean) = safe { settingsStore.setDynamicColor(v) }
     fun setRatingOnComplete(v: Boolean) = safe { settingsStore.setRatingOnComplete(v) }
+    fun setBiometricEnabled(v: Boolean) = safe { settingsStore.setBiometricEnabled(v) }
     fun setBackupEnabled(v: Boolean) = safe { settingsStore.setBackupEnabled(v) }
     fun setBackupFrequency(v: Int) = safe { settingsStore.setBackupFrequency(v) }
     fun setBackupHour(v: Int) = safe { settingsStore.setBackupHour(v) }
@@ -71,6 +72,27 @@ class SettingsViewModel(container: AppContainer) : ViewModel() {
             val result = backupManager.restoreFromUri(uri, passphrase)
             notify(if (result.isSuccess) "Restore completed" else "Restore failed: ${result.exceptionOrNull()?.message}")
             refreshBackups()
+        }
+    }
+
+    fun exportPort(uri: Uri) {
+        viewModelScope.launch {
+            val result = container.portManager.exportToUri(uri)
+            notify(if (result.isSuccess) "Export saved" else "Export failed: ${result.exceptionOrNull()?.message}")
+        }
+    }
+
+    fun importPort(uri: Uri) {
+        viewModelScope.launch {
+            val result = container.portManager.importFromUri(uri)
+            notify(
+                if (result.isSuccess) {
+                    val s = result.getOrNull() ?: return@launch
+                    "Imported ${s.tasks} tasks, ${s.notes} notes, ${s.labels} labels"
+                } else {
+                    "Import failed: ${result.exceptionOrNull()?.message}"
+                }
+            )
         }
     }
 

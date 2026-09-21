@@ -18,6 +18,7 @@ import com.den.app.jobs.RescheduleWorker
 import com.den.app.media.MediaImporter
 import com.den.app.notify.NotificationHelper
 import com.den.app.notify.ReminderScheduler
+import com.den.app.port.PortManager
 import com.den.app.settings.PasscodeManager
 import com.den.app.settings.SettingsStore
 import com.den.app.ui.viewmodel.DenViewModelFactory
@@ -57,6 +58,7 @@ class AppContainer(context: Context) {
     val labelRepo = LabelRepository(database.labelDao())
     val backupManager = BackupManager(appContext, database, attachmentRepo, settings, crypto)
     val mediaImporter = MediaImporter(appContext, attachmentRepo)
+    val portManager = PortManager(appContext, database)
     val passcode = PasscodeManager(settings, crypto)
 
     private val navChannel = Channel<NavRequest>(Channel.BUFFERED)

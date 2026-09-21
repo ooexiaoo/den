@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -77,6 +78,10 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
             else -> rows.count { !it.task.completed }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val allTasks: StateFlow<List<Task>> = allWithSubtasks
+        .map { rows -> rows.map { it.task } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setFilter(filter: TaskFilter) {
         _filter.value = filter

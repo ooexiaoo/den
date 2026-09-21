@@ -33,6 +33,8 @@ class TaskRepository(
 
     suspend fun pendingReminderTasks(): List<Task> = taskDao.tasksWithReminders()
 
+    suspend fun allTasks(): List<Task> = taskDao.allForBackup()
+
     suspend fun create(
         title: String,
         notes: String = "",

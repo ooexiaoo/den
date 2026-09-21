@@ -115,6 +115,10 @@ dependencies {
 
     // Biometric app lock
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+
+    // Home-screen widgets
+    implementation("androidx.glance:glance-appwidget:1.1.1")
 
     // Serialization for backup payloads
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")

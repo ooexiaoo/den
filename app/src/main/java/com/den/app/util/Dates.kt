@@ -1,7 +1,10 @@
 package com.den.app.util
 
+import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -92,4 +95,30 @@ object Dates {
         if (startOfDay(ts) == startOfDay(now() + 86_400_000L)) return "Tomorrow"
         return formatDateShort(ts)
     }
+
+    // ---- calendar ----
+
+    fun toLocalDate(ts: Long): LocalDate = toLocal(ts).toLocalDate()
+
+    fun dayMillis(date: LocalDate): Long = date.atStartOfDay(zone()).toInstant().toEpochMilli()
+
+    fun startOfMonth(ts: Long): LocalDate = toLocalDate(ts).withDayOfMonth(1)
+
+    fun shiftMonth(ts: Long, months: Long): LocalDate =
+        YearMonth.from(toLocalDate(ts)).plusMonths(months).atDay(1)
+
+    fun monthLabel(year: Int, month: Int): String {
+        val monthName = java.time.Month.of(month + 1).getDisplayName(TextStyle.FULL, Locale.getDefault())
+        return "$monthName $year"
+    }
+
+    fun monthGrid(year: Int, month: Int, firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY): List<LocalDate> {
+        val first = YearMonth.of(year, month + 1).atDay(1)
+        val lead = (first.dayOfWeek.value - firstDayOfWeek.value + 7) % 7
+        val leadStart = first.minusDays(lead.toLong())
+        return (0 until 42).map { leadStart.plusDays(it.toLong()) }
+    }
+
+    fun isSameMonth(date: LocalDate, year: Int, month: Int): Boolean =
+        date.year == year && date.monthValue == month + 1
 }

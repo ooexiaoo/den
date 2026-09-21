@@ -252,10 +252,22 @@ interface LabelDao {
     fun observeTaskLabels(taskId: Long): Flow<List<Label>>
 
     @Query(
+        "SELECT l.* FROM labels l INNER JOIN task_labels tl ON tl.labelId = l.id " +
+            "WHERE tl.taskId = :taskId ORDER BY l.name COLLATE NOCASE ASC"
+    )
+    suspend fun labelsForTask(taskId: Long): List<Label>
+
+    @Query(
         "SELECT l.* FROM labels l INNER JOIN note_labels nl ON nl.labelId = l.id " +
             "WHERE nl.noteId = :noteId ORDER BY l.name COLLATE NOCASE ASC"
     )
     fun observeNoteLabels(noteId: Long): Flow<List<Label>>
+
+    @Query(
+        "SELECT l.* FROM labels l INNER JOIN note_labels nl ON nl.labelId = l.id " +
+            "WHERE nl.noteId = :noteId ORDER BY l.name COLLATE NOCASE ASC"
+    )
+    suspend fun labelsForNote(noteId: Long): List<Label>
 
     @Query(
         "SELECT t.* FROM tasks t INNER JOIN task_labels tl ON tl.taskId = t.id " +

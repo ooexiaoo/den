@@ -2,6 +2,7 @@ package com.den.app.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.biometric.BiometricManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
@@ -90,6 +92,7 @@ fun SettingsScreen(
     var showDisablePasscode by remember { mutableStateOf(false) }
     var passphraseDialog by remember { mutableStateOf<BackupAction?>(null) }
     var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var pendingPortImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     val createBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         if (uri != null) vm.exportBackup(uri, settings.backupIncludeMedia)
@@ -103,6 +106,12 @@ fun SettingsScreen(
                 vm.restoreBackup(uri, null)
             }
         }
+    }
+    val exportPort = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) vm.exportPort(uri)
+    }
+    val openPort = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) pendingPortImportUri = uri
     }
 
     Scaffold(
@@ -177,6 +186,16 @@ fun SettingsScreen(
                     }
                 }
             })
+            val context = LocalContext.current
+            val biometricAvailable = remember {
+                BiometricManager.from(context)
+                    .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+            }
+            if (passcodeOn && biometricAvailable) {
+                SettingRow("Biometric unlock", subtitle = "Unlock with fingerprint instead of typing", trailing = {
+                    Switch(checked = settings.biometricEnabled, onCheckedChange = vm::setBiometricEnabled)
+                })
+            }
 
             SectionHeader("Backups")
             SettingRow("Auto backup", subtitle = "Encrypted backups stored on device", trailing = {
@@ -284,6 +303,31 @@ fun SettingsScreen(
             }
             Text(
                 "Restoring replaces all current data.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+
+            SectionHeader("Portable")
+            OutlinedButton(
+                onClick = { exportPort.launch("den-export-${System.currentTimeMillis()}.json") },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Export all as JSON")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { openPort.launch(arrayOf("application/json", "application/octet-stream", "text/*")) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Import from JSON")
+            }
+            Text(
+                "Plain JSON of tasks, notes, subtasks and labels. Importing merges into your data; media is not included.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
@@ -408,6 +452,19 @@ fun SettingsScreen(
                 showDisablePasscode = false
             },
             onDismiss = { showDisablePasscode = false },
+        )
+    }
+
+    if (pendingPortImportUri != null) {
+        ConfirmDialog(
+            title = "Import JSON?",
+            message = "Tasks, notes and labels from this file will be merged into your current data.",
+            confirmText = "Import",
+            onConfirm = {
+                pendingPortImportUri?.let { vm.importPort(it) }
+                pendingPortImportUri = null
+            },
+            onDismiss = { pendingPortImportUri = null },
         )
     }
 

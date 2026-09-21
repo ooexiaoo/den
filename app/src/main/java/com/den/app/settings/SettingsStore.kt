@@ -20,6 +20,7 @@ data class Settings(
     val dynamicColor: Boolean = false,
     val passcodeEnabled: Boolean = false,
     val passcodeHash: String? = null,
+    val biometricEnabled: Boolean = false,
     val ratingOnComplete: Boolean = true,
     val backupEnabled: Boolean = true,
     val backupFrequency: Int = 0,
@@ -42,6 +43,7 @@ class SettingsStore(private val context: Context) {
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val PASSCODE_ENABLED = booleanPreferencesKey("passcode_enabled")
         val PASSCODE_HASH = stringPreferencesKey("passcode_hash")
+        val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val RATING_ON_COMPLETE = booleanPreferencesKey("rating_on_complete")
         val BACKUP_ENABLED = booleanPreferencesKey("backup_enabled")
         val BACKUP_FREQUENCY = intPreferencesKey("backup_frequency")
@@ -64,6 +66,7 @@ class SettingsStore(private val context: Context) {
         dynamicColor = this[Keys.DYNAMIC_COLOR] ?: false,
         passcodeEnabled = this[Keys.PASSCODE_ENABLED] ?: false,
         passcodeHash = this[Keys.PASSCODE_HASH],
+        biometricEnabled = this[Keys.BIOMETRIC_ENABLED] ?: false,
         ratingOnComplete = this[Keys.RATING_ON_COMPLETE] ?: true,
         backupEnabled = this[Keys.BACKUP_ENABLED] ?: true,
         backupFrequency = this[Keys.BACKUP_FREQUENCY] ?: 0,
@@ -82,6 +85,7 @@ class SettingsStore(private val context: Context) {
     suspend fun setDarkMode(v: Int) = edit { it[Keys.DARK_MODE] = v }
     suspend fun setDynamicColor(v: Boolean) = edit { it[Keys.DYNAMIC_COLOR] = v }
     suspend fun setPasscodeEnabled(v: Boolean) = edit { it[Keys.PASSCODE_ENABLED] = v }
+    suspend fun setBiometricEnabled(v: Boolean) = edit { it[Keys.BIOMETRIC_ENABLED] = v }
     suspend fun setPasscodeHash(v: String?) = edit { if (v == null) it.remove(Keys.PASSCODE_HASH) else it[Keys.PASSCODE_HASH] = v }
     suspend fun setRatingOnComplete(v: Boolean) = edit { it[Keys.RATING_ON_COMPLETE] = v }
     suspend fun setBackupEnabled(v: Boolean) = edit { it[Keys.BACKUP_ENABLED] = v }
