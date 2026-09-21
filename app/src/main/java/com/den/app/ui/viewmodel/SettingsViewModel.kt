@@ -19,6 +19,7 @@ class SettingsViewModel(container: AppContainer) : ViewModel() {
 
     private val settingsStore = container.settings
     private val backupManager = container.backupManager
+    private val portManager = container.portManager
     val passcode = container.passcode
 
     val settings: StateFlow<Settings> = settingsStore.settings
@@ -77,14 +78,14 @@ class SettingsViewModel(container: AppContainer) : ViewModel() {
 
     fun exportPort(uri: Uri) {
         viewModelScope.launch {
-            val result = container.portManager.exportToUri(uri)
+            val result = portManager.exportToUri(uri)
             notify(if (result.isSuccess) "Export saved" else "Export failed: ${result.exceptionOrNull()?.message}")
         }
     }
 
     fun importPort(uri: Uri) {
         viewModelScope.launch {
-            val result = container.portManager.importFromUri(uri)
+            val result = portManager.importFromUri(uri)
             notify(
                 if (result.isSuccess) {
                     val s = result.getOrNull() ?: return@launch

@@ -4,6 +4,7 @@ package com.den.app.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.ExperimentalGlanceApi
@@ -40,11 +41,11 @@ import com.den.app.MainActivity
 import com.den.app.data.model.Task
 import com.den.app.util.Dates
 
-private val WidgetBg = ColorProvider(0xFF1B1B1FuL)
-private val WidgetFg = ColorProvider(0xFFF4F4F5uL)
-private val WidgetMuted = ColorProvider(0xFFB0B0B6uL)
-private val WidgetAccent = ColorProvider(0xFF8AB4F8uL)
-private val WidgetDone = ColorProvider(0xFFEDEDEDuL)
+private val WidgetBg = ColorProvider(Color(0xFF1B1B1F))
+private val WidgetFg = ColorProvider(Color(0xFFF4F4F5))
+private val WidgetMuted = ColorProvider(Color(0xFFB0B0B6))
+private val WidgetAccent = ColorProvider(Color(0xFF8AB4F8))
+private val WidgetDone = ColorProvider(Color(0xFFEDEDED))
 
 class TasksWidget : GlanceAppWidget() {
 
