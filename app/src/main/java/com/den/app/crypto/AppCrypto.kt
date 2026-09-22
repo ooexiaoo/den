@@ -80,8 +80,10 @@ class AppCrypto(private val context: Context) {
 
     fun encrypt(data: ByteArray): ByteArray {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val iv = randomBytes(IV_LEN)
-        cipher.init(Cipher.ENCRYPT_MODE, master, GCMParameterSpec(GCM_TAG_BITS, iv))
+        // AndroidKeyStore forbids caller-provided IVs (randomized encryption requirement);
+        // let the keystore generate one and read it back after init.
+        cipher.init(Cipher.ENCRYPT_MODE, master)
+        val iv = cipher.iv
         val ct = cipher.doFinal(data)
         return iv + ct
     }
@@ -96,8 +98,8 @@ class AppCrypto(private val context: Context) {
 
     fun streamEncryptSink(out: OutputStream): OutputStream {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val iv = randomBytes(IV_LEN)
-        cipher.init(Cipher.ENCRYPT_MODE, master, GCMParameterSpec(GCM_TAG_BITS, iv))
+        cipher.init(Cipher.ENCRYPT_MODE, master)
+        val iv = cipher.iv
         out.write(iv)
         return CipherOutputStream(out, cipher)
     }
