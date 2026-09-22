@@ -92,7 +92,7 @@ private fun MainGate(
     var handledDeepLink by remember { mutableStateOf(initialTaskId == null) }
 
     LaunchedEffect(passcodeEnabled) {
-        if (!passcodeEnabled) unlocked = true
+        unlocked = !passcodeEnabled
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current

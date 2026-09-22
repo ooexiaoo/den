@@ -50,11 +50,11 @@ import com.den.app.data.model.AttachPurposes
 import com.den.app.data.model.OwnerTypes
 import com.den.app.ui.components.AttachedMediaGrid
 import com.den.app.ui.components.ChipItem
-import com.den.app.ui.components.ColorDot
+import com.den.app.ui.components.ColorPickerDialog
 import com.den.app.ui.components.ConfirmDialog
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MediaPickerBar
-import com.den.app.ui.components.paletteColors
+import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.NoteEditViewModel
 import kotlinx.coroutines.launch
@@ -214,36 +214,19 @@ fun NoteEditScreen(
     }
 
     if (showColorPicker) {
-        AlertDialog(
-            onDismissRequest = { showColorPicker = false },
-            title = { Text("Note color") },
-            text = {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    paletteColors.forEachIndexed { index, c ->
-                        ColorDot(
-                            color = c,
-                            selected = color == index,
-                            onClick = { vm.setColor(if (color == index) null else index); showColorPicker = false },
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showColorPicker = false }) { Text("Close") }
-            },
+        ColorPickerDialog(
+            title = "Note color",
+            selected = color,
+            allowNone = true,
+            onSelect = { vm.setColor(it) },
+            onDismiss = { showColorPicker = false },
         )
     }
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-    )
-}
+private fun SectionTitle(text: String) =
+    SectionHeader(text, Modifier.padding(top = 20.dp, bottom = 8.dp))
 
 private fun mentionMatches(
     targets: List<NoteTitleRow>,

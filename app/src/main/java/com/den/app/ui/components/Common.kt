@@ -1,6 +1,8 @@
 package com.den.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.den.app.data.model.Label
 import com.den.app.data.model.Task
 import com.den.app.ui.theme.PALETTES
@@ -203,6 +207,125 @@ fun LabelChipsRow(labels: List<Label>, modifier: Modifier = Modifier) {
 }
 
 val paletteColors: List<Color> get() = PALETTES.map { it.seed }
+
+@Composable
+fun SectionHeader(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = 0.5.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun ColorPickerDialog(
+    title: String,
+    selected: Int?,
+    allowNone: Boolean = true,
+    onSelect: (Int?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                buildList {
+                    if (allowNone) add(null)
+                    addAll(paletteColors.indices)
+                }.chunked(4).forEach { rowCells ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        rowCells.forEach { index ->
+                            ColorPickCell(
+                                index = index,
+                                selected = selected == index,
+                                onClick = {
+                                    onSelect(index)
+                                    onDismiss()
+                                },
+                            )
+                        }
+                        repeat(4 - rowCells.size) { Spacer(Modifier.width(62.dp)) }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+@Composable
+private fun ColorPickCell(
+    index: Int?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val seed = index?.let { paletteColors.getOrNull(it) }
+    val name = index?.let { PALETTES.getOrNull(it)?.name } ?: "None"
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(62.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .then(
+                        if (selected) {
+                            Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .then(
+                        if (seed != null) {
+                            Modifier.background(seed, CircleShape)
+                        } else {
+                            Modifier
+                                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (selected) {
+                    val tint = if (seed != null && seed.luminance() > 0.5f) Color(0xFF111111) else MaterialTheme.colorScheme.onSurface
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Selected",
+                        tint = tint,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+}
 
 data class ChipItem(
     val label: String,

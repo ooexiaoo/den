@@ -55,6 +55,7 @@ import com.den.app.AppContainer
 import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
 import com.den.app.ui.components.FilterChipRow
+import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.paletteColors
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskEditViewModel
@@ -347,14 +348,8 @@ fun TaskEditScreen(
 }
 
 @Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-    )
-}
+private fun SectionLabel(text: String) =
+    SectionHeader(text, Modifier.padding(top = 20.dp, bottom = 8.dp))
 
 private fun utcOfDay(millis: Long): Long =
     Dates.toLocal(millis).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

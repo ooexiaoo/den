@@ -3,8 +3,6 @@ package com.den.app.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -52,22 +49,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.BuildConfig
 import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
+import com.den.app.ui.components.ColorPickerDialog
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.LocalSnackbarHostState
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.paletteColors
-import com.den.app.ui.theme.AppPalette
 import com.den.app.ui.theme.PALETTES
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.SettingsViewModel
@@ -144,7 +138,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            SectionHeader("Appearance")
+            SettingsSection("Appearance")
             SettingRow("Theme color", trailing = {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showColorPicker = true }) {
                     ColorDot(color = paletteColors.getOrElse(settings.themeColorIndex) { Color.Transparent }, selected = false, onClick = { showColorPicker = true })
@@ -172,12 +166,12 @@ fun SettingsScreen(
                 Switch(checked = settings.dynamicColor, onCheckedChange = vm::setDynamicColor)
             })
 
-            SectionHeader("Completion")
+            SettingsSection("Completion")
             SettingRow("Rate tasks on completion", subtitle = "Ask for a rating, note and photo when finishing a task", trailing = {
                 Switch(checked = settings.ratingOnComplete, onCheckedChange = vm::setRatingOnComplete)
             })
 
-            SectionHeader("Reminders")
+            SettingsSection("Reminders")
             SettingRow(
                 label = "Default reminder",
                 subtitle = "Applied when adding tasks with a due date",
@@ -195,7 +189,7 @@ fun SettingsScreen(
                 },
             )
 
-            SectionHeader("Security")
+            SettingsSection("Security")
             val passcodeOn = settings.passcodeEnabled && !settings.passcodeHash.isNullOrEmpty()
             SettingRow("Passcode lock", subtitle = if (passcodeOn) "Lock the app behind a passcode" else "Off", trailing = {
                 if (!passcodeOn) {
@@ -217,7 +211,7 @@ fun SettingsScreen(
                 })
             }
 
-            SectionHeader("Backups")
+            SettingsSection("Backups")
             SettingRow("Auto backup", subtitle = "Encrypted backups stored on device", trailing = {
                 Switch(checked = settings.backupEnabled, onCheckedChange = vm::setBackupEnabled)
             })
@@ -295,7 +289,7 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Data")
+            SettingsSection("Data")
             OutlinedButton(
                 onClick = { createBackup.launch("den-backup-${System.currentTimeMillis()}.cbl") },
                 modifier = Modifier.fillMaxWidth(),
@@ -322,7 +316,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(top = 4.dp),
             )
 
-            SectionHeader("Portable")
+            SettingsSection("Portable")
             OutlinedButton(
                 onClick = { exportPort.launch("den-export-${System.currentTimeMillis()}.json") },
                 modifier = Modifier.fillMaxWidth(),
@@ -358,9 +352,11 @@ fun SettingsScreen(
     }
 
     if (showColorPicker) {
-        ThemeColorDialog(
-            current = settings.themeColorIndex,
-            onSelect = { vm.setThemeColorIndex(it) },
+        ColorPickerDialog(
+            title = "Theme color",
+            selected = settings.themeColorIndex,
+            allowNone = false,
+            onSelect = { vm.setThemeColorIndex(it ?: 0) },
             onDismiss = { showColorPicker = false },
         )
     }
@@ -509,16 +505,8 @@ fun SettingsScreen(
 private enum class BackupAction { SET, RESTORE }
 
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        letterSpacing = 0.5.sp,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 24.dp, bottom = 6.dp),
-    )
-}
+private fun SettingsSection(text: String) =
+    SectionHeader(text, Modifier.padding(top = 24.dp, bottom = 6.dp))
 
 @Composable
 private fun SettingRow(
@@ -544,94 +532,6 @@ private fun SettingRow(
             Spacer(Modifier.height(10.dp))
             content()
         }
-    }
-}
-
-@Composable
-private fun ThemeColorDialog(
-    current: Int,
-    onSelect: (Int) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Theme color") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                PALETTES.chunked(4).forEach { rowPalettes ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        rowPalettes.forEach { palette ->
-                            ColorSwatch(
-                                palette = palette,
-                                selected = current == palette.id,
-                                onClick = {
-                                    onSelect(palette.id)
-                                    onDismiss()
-                                },
-                            )
-                        }
-                        repeat(4 - rowPalettes.size) { Spacer(Modifier.width(60.dp)) }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-    )
-}
-
-@Composable
-private fun ColorSwatch(
-    palette: AppPalette,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(60.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .then(
-                        if (selected) {
-                            Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .background(palette.seed, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (selected) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Selected",
-                        tint = if (palette.seed.luminance() > 0.5f) Color(0xFF111111) else Color.White,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-        Text(
-            text = palette.name,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 2.dp),
-        )
     }
 }
 

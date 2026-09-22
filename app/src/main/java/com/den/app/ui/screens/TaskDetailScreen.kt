@@ -53,6 +53,7 @@ import com.den.app.ui.components.ConfirmDialog
 import com.den.app.ui.components.DueChip
 import com.den.app.ui.components.LabelChipsRow
 import com.den.app.ui.components.MediaPickerBar
+import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.SubtaskProgress
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskDetailViewModel
@@ -86,7 +87,7 @@ fun TaskDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(task?.title ?: "") },
+                title = { Text("Task") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -138,7 +139,7 @@ fun TaskDetailScreen(
                 }
 
                 if (task.notes.isNotBlank()) {
-                    SectionHeader("Notes")
+                    SectionHeader("Notes", Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp))
                     Text(
                         text = task.notes,
                         style = MaterialTheme.typography.bodyLarge,
@@ -146,11 +147,11 @@ fun TaskDetailScreen(
                     )
                 }
 
-                SectionHeader("Subtasks")
+                SectionHeader("Subtasks", Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp))
                 data?.subtasks?.forEach { sub ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
                     ) {
                         Checkbox(checked = sub.done, onCheckedChange = { vm.setSubtaskDone(sub, it) })
                         Text(
@@ -183,7 +184,7 @@ fun TaskDetailScreen(
                     }
                 }
 
-                SectionHeader("Notes & media")
+                SectionHeader("Notes & media", Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp))
                 MediaPickerBar(
                     onImportUri = { uri ->
                         container.mediaImporter.importFromUri(uri, OwnerTypes.TASK, taskId, AttachPurposes.TASK_CONTENT) != null
@@ -199,7 +200,7 @@ fun TaskDetailScreen(
                 )
 
                 if (task.completed) {
-                    SectionHeader("Completion")
+                    SectionHeader("Completion", Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp))
                     RatingStars(task.completeRating ?: 0)
                     if (!task.completeReflection.isNullOrBlank()) {
                         Spacer(Modifier.height(8.dp))
@@ -260,16 +261,6 @@ fun TaskDetailScreen(
             onDismiss = { showDelete = false },
         )
     }
-}
-
-@Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
-    )
 }
 
 @Composable
