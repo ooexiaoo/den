@@ -146,6 +146,7 @@ private fun SevereErrorScreen(crashText: String?) {
 
 @Composable
 private fun CrashLogDialog(text: String, onDismissed: () -> Unit) {
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismissed,
         title = { Text("Den crashed last time") },
@@ -165,7 +166,7 @@ private fun CrashLogDialog(text: String, onDismissed: () -> Unit) {
         confirmButton = {
             TextButton(
                 onClick = {
-                    copyTextToClipboard(LocalContext.current, text)
+                    copyTextToClipboard(context, text)
                     onDismissed()
                 }
             ) {
