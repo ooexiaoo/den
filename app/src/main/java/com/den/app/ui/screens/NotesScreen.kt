@@ -1,5 +1,6 @@
 package com.den.app.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -110,6 +111,7 @@ fun NotesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 96.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(notes, key = { it.id }) { note ->
                     Box(modifier = Modifier.fillMaxWidth()) {

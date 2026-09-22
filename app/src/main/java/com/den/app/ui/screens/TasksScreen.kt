@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.data.model.Task
+import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.EmptyState
+import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MonthCalendar
 import com.den.app.ui.components.TaskRow
 import com.den.app.ui.viewmodel.DenViewModelFactory
@@ -154,15 +155,17 @@ fun TasksScreen(
                     }
                 }
             } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(selected = filter == TaskFilter.ALL, onClick = { vm.setFilter(TaskFilter.ALL) }, label = { Text("Open") })
-                    FilterChip(selected = filter == TaskFilter.TODAY, onClick = { vm.setFilter(TaskFilter.TODAY) }, label = { Text("Today") })
-                    FilterChip(selected = filter == TaskFilter.UPCOMING, onClick = { vm.setFilter(TaskFilter.UPCOMING) }, label = { Text("Upcoming") })
-                    FilterChip(selected = filter == TaskFilter.DONE, onClick = { vm.setFilter(TaskFilter.DONE) }, label = { Text("Done") })
-                }
+                FilterChipRow(
+                    items = listOf(
+                        ChipItem("Open", filter == TaskFilter.ALL) { vm.setFilter(TaskFilter.ALL) },
+                        ChipItem("Today", filter == TaskFilter.TODAY) { vm.setFilter(TaskFilter.TODAY) },
+                        ChipItem("Upcoming", filter == TaskFilter.UPCOMING) { vm.setFilter(TaskFilter.UPCOMING) },
+                        ChipItem("Done", filter == TaskFilter.DONE) { vm.setFilter(TaskFilter.DONE) },
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                )
 
                 if (tasks.isEmpty()) {
                     EmptyState(

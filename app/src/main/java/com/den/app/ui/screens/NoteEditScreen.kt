@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,8 +49,10 @@ import com.den.app.data.db.NoteTitleRow
 import com.den.app.data.model.AttachPurposes
 import com.den.app.data.model.OwnerTypes
 import com.den.app.ui.components.AttachedMediaGrid
+import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MediaPickerBar
 import com.den.app.ui.components.paletteColors
 import com.den.app.ui.viewmodel.DenViewModelFactory
@@ -149,15 +150,15 @@ fun NoteEditScreen(
             if (labels.isEmpty()) {
                 Text("Create labels from the Labels tab", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    labels.forEach { l ->
-                        FilterChip(
+                FilterChipRow(
+                    items = labels.map { l ->
+                        ChipItem(
+                            label = l.label.name,
                             selected = l.label.id in selectedLabels,
                             onClick = { vm.toggleLabel(l.label.id) },
-                            label = { Text(l.label.name) },
                         )
-                    }
-                }
+                    },
+                )
             }
 
             SectionTitle("Media")

@@ -3,8 +3,11 @@ package com.den.app.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +30,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,15 +52,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.BuildConfig
+import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
+import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.LocalSnackbarHostState
 import com.den.app.ui.components.ConfirmDialog
 import com.den.app.ui.components.paletteColors
+import com.den.app.ui.theme.AppPalette
+import com.den.app.ui.theme.PALETTES
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.SettingsViewModel
 import com.den.app.util.Dates
@@ -138,21 +148,26 @@ fun SettingsScreen(
             SettingRow("Theme color", trailing = {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showColorPicker = true }) {
                     ColorDot(color = paletteColors.getOrElse(settings.themeColorIndex) { Color.Transparent }, selected = false, onClick = { showColorPicker = true })
-                    Spacer(Modifier.width(6.dp))
-                    Text(themeColorName(settings.themeColorIndex), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = PALETTES.getOrNull(settings.themeColorIndex)?.name ?: "Color",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                 }
             })
-            SettingRow("Dark mode", trailing = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(0 to "Auto", 1 to "Light", 2 to "Dark").forEach { (value, label) ->
-                        FilterChip(
-                            selected = settings.darkMode == value,
-                            onClick = { vm.setDarkMode(value) },
-                            label = { Text(label) },
-                        )
-                    }
-                }
-            })
+            SettingRow(
+                label = "Dark mode",
+                subtitle = "How Den looks on this device",
+                content = {
+                    FilterChipRow(
+                        items = listOf(
+                            ChipItem("Auto", settings.darkMode == 0) { vm.setDarkMode(0) },
+                            ChipItem("Light", settings.darkMode == 1) { vm.setDarkMode(1) },
+                            ChipItem("Dark", settings.darkMode == 2) { vm.setDarkMode(2) },
+                        ),
+                    )
+                },
+            )
             SettingRow("Dynamic color", subtitle = "Use wallpaper colors (Android 12+)", trailing = {
                 Switch(checked = settings.dynamicColor, onCheckedChange = vm::setDynamicColor)
             })
@@ -163,17 +178,22 @@ fun SettingsScreen(
             })
 
             SectionHeader("Reminders")
-            SettingRow("Default reminder", subtitle = "Applied when adding tasks with a due date", trailing = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(0 to "Off", 5 to "5m", 10 to "10m", 15 to "15m", 30 to "30m", 60 to "1h").forEach { (value, label) ->
-                        FilterChip(
-                            selected = settings.reminderDefaultMinutes == value,
-                            onClick = { vm.setReminderDefaultMinutes(value) },
-                            label = { Text(label) },
-                        )
-                    }
-                }
-            })
+            SettingRow(
+                label = "Default reminder",
+                subtitle = "Applied when adding tasks with a due date",
+                content = {
+                    FilterChipRow(
+                        items = listOf(
+                            ChipItem("Off", settings.reminderDefaultMinutes == 0) { vm.setReminderDefaultMinutes(0) },
+                            ChipItem("5m", settings.reminderDefaultMinutes == 5) { vm.setReminderDefaultMinutes(5) },
+                            ChipItem("10m", settings.reminderDefaultMinutes == 10) { vm.setReminderDefaultMinutes(10) },
+                            ChipItem("15m", settings.reminderDefaultMinutes == 15) { vm.setReminderDefaultMinutes(15) },
+                            ChipItem("30m", settings.reminderDefaultMinutes == 30) { vm.setReminderDefaultMinutes(30) },
+                            ChipItem("1h", settings.reminderDefaultMinutes == 60) { vm.setReminderDefaultMinutes(60) },
+                        ),
+                    )
+                },
+            )
 
             SectionHeader("Security")
             val passcodeOn = settings.passcodeEnabled && !settings.passcodeHash.isNullOrEmpty()
@@ -201,51 +221,45 @@ fun SettingsScreen(
             SettingRow("Auto backup", subtitle = "Encrypted backups stored on device", trailing = {
                 Switch(checked = settings.backupEnabled, onCheckedChange = vm::setBackupEnabled)
             })
-            SettingRow("Frequency", trailing = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = settings.backupFrequency == 0,
-                        onClick = { vm.setBackupFrequency(0) },
-                        label = { Text("Daily") },
+            SettingRow(
+                label = "Frequency",
+                content = {
+                    FilterChipRow(
+                        items = listOf(
+                            ChipItem("Daily", settings.backupFrequency == 0) { vm.setBackupFrequency(0) },
+                            ChipItem("Weekly", settings.backupFrequency == 1) { vm.setBackupFrequency(1) },
+                        ),
                     )
-                    FilterChip(
-                        selected = settings.backupFrequency == 1,
-                        onClick = { vm.setBackupFrequency(1) },
-                        label = { Text("Weekly") },
-                    )
-                }
-            })
+                },
+            )
             SettingRow("Time", subtitle = "Automatic backups run around this hour", trailing = {
                 AssistChip(onClick = { showHourPicker = true }, label = { Text(hourLabel(settings.backupHour)) })
             })
             SettingRow("Include media", subtitle = "Photos & videos in backups (larger files)", trailing = {
                 Switch(checked = settings.backupIncludeMedia, onCheckedChange = vm::setBackupIncludeMedia)
             })
-            SettingRow("Keep backups", trailing = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(2, 5, 10, 20).forEach { count ->
-                        FilterChip(
-                            selected = settings.backupKeepCount == count,
-                            onClick = { vm.setBackupKeepCount(count) },
-                            label = { Text("$count") },
-                        )
-                    }
-                }
-            })
-            SettingRow("Encryption", subtitle = "How backup files are encrypted", trailing = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = settings.backupEncryption == "device",
-                        onClick = { vm.setBackupEncryption("device") },
-                        label = { Text("Device key") },
+            SettingRow(
+                label = "Keep backups",
+                content = {
+                    FilterChipRow(
+                        items = listOf(2, 5, 10, 20).map { count ->
+                            ChipItem("$count", settings.backupKeepCount == count) { vm.setBackupKeepCount(count) }
+                        },
                     )
-                    FilterChip(
-                        selected = settings.backupEncryption == "passphrase",
-                        onClick = { vm.setBackupEncryption("passphrase") },
-                        label = { Text("Passphrase") },
+                },
+            )
+            SettingRow(
+                label = "Encryption",
+                subtitle = "How backup files are encrypted",
+                content = {
+                    FilterChipRow(
+                        items = listOf(
+                            ChipItem("Device key", settings.backupEncryption == "device") { vm.setBackupEncryption("device") },
+                            ChipItem("Passphrase", settings.backupEncryption == "passphrase") { vm.setBackupEncryption("passphrase") },
+                        ),
                     )
-                }
-            })
+                },
+            )
             if (settings.backupEncryption == "passphrase") {
                 SettingRow("Backup passphrase", subtitle = "Required to restore on another device", trailing = {
                     OutlinedButton(onClick = { passphraseDialog = BackupAction.SET }) {
@@ -344,31 +358,10 @@ fun SettingsScreen(
     }
 
     if (showColorPicker) {
-        AlertDialog(
-            onDismissRequest = { showColorPicker = false },
-            title = { Text("Theme color") },
-            text = {
-                Column {
-                    paletteColors.forEachIndexed { index, color ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().clickable { vm.setThemeColorIndex(index); showColorPicker = false }.padding(vertical = 8.dp),
-                        ) {
-                            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                                ColorDot(color = color, selected = settings.themeColorIndex == index, onClick = {})
-                                Spacer(Modifier.width(12.dp))
-                                Text(themeColorName(index), style = MaterialTheme.typography.bodyLarge)
-                            }
-                            if (settings.themeColorIndex == index) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showColorPicker = false }) { Text("Close") }
-            },
+        ThemeColorDialog(
+            current = settings.themeColorIndex,
+            onSelect = { vm.setThemeColorIndex(it) },
+            onDismiss = { showColorPicker = false },
         )
     }
 
@@ -518,38 +511,128 @@ private enum class BackupAction { SET, RESTORE }
 @Composable
 private fun SectionHeader(text: String) {
     Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
+        letterSpacing = 0.5.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 24.dp, bottom = 6.dp),
     )
 }
 
 @Composable
 private fun SettingRow(
     label: String,
-    trailing: @Composable () -> Unit,
     subtitle: String? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    content: (@Composable () -> Unit)? = null,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyLarge)
-            if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.bodyLarge)
+                if (subtitle != null) {
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(12.dp))
+                trailing()
             }
         }
-        Spacer(Modifier.width(12.dp))
-        trailing()
+        if (content != null) {
+            Spacer(Modifier.height(10.dp))
+            content()
+        }
     }
 }
 
-private fun themeColorName(index: Int): String =
-    listOf("Indigo", "Teal", "Emerald", "Rose", "Amber", "Sky", "Violet", "Crimson", "Orange", "Slate", "Lime", "Cyan", "Grape", "Sunset")
-        .getOrElse(index) { "Color" }
+@Composable
+private fun ThemeColorDialog(
+    current: Int,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Theme color") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                PALETTES.chunked(4).forEach { rowPalettes ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        rowPalettes.forEach { palette ->
+                            ColorSwatch(
+                                palette = palette,
+                                selected = current == palette.id,
+                                onClick = {
+                                    onSelect(palette.id)
+                                    onDismiss()
+                                },
+                            )
+                        }
+                        repeat(4 - rowPalettes.size) { Spacer(Modifier.width(60.dp)) }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+@Composable
+private fun ColorSwatch(
+    palette: AppPalette,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(60.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .then(
+                        if (selected) {
+                            Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .background(palette.seed, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (selected) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Selected",
+                        tint = if (palette.seed.luminance() > 0.5f) Color(0xFF111111) else Color.White,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
+        Text(
+            text = palette.name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+}
 
 private fun hourLabel(hour: Int): String = String.format("%02d:00", hour)

@@ -2,6 +2,8 @@ package com.den.app.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +27,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +52,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
+import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
+import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.paletteColors
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskEditViewModel
@@ -62,7 +65,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun TaskEditScreen(
     container: AppContainer,
@@ -174,20 +177,19 @@ fun TaskEditScreen(
             }
 
             SectionLabel("Priority")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(0 to "None", 1 to "Low", 2 to "Medium", 3 to "High").forEach { (value, label) ->
-                    FilterChip(
-                        selected = ui.priority == value,
-                        onClick = { vm.setPriority(value) },
-                        label = { Text(label) },
-                    )
-                }
-            }
+            FilterChipRow(
+                items = listOf(
+                    ChipItem("None", ui.priority == 0) { vm.setPriority(0) },
+                    ChipItem("Low", ui.priority == 1) { vm.setPriority(1) },
+                    ChipItem("Medium", ui.priority == 2) { vm.setPriority(2) },
+                    ChipItem("High", ui.priority == 3) { vm.setPriority(3) },
+                ),
+            )
 
             SectionLabel("Color")
-            Row(
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 paletteColors.forEachIndexed { index, color ->
                     ColorDot(
@@ -207,15 +209,15 @@ fun TaskEditScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    labels.forEach { l ->
-                        FilterChip(
+                FilterChipRow(
+                    items = labels.map { l ->
+                        ChipItem(
+                            label = l.label.name,
                             selected = l.label.id in ui.selectedLabels,
                             onClick = { vm.toggleLabel(l.label.id) },
-                            label = { Text(l.label.name) },
                         )
-                    }
-                }
+                    },
+                )
             }
 
             SectionLabel("Subtasks")
