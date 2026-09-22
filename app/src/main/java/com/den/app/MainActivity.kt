@@ -7,6 +7,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -46,23 +50,31 @@ class MainActivity : FragmentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        val container = AppGraph.container ?: error("AppContainer not initialized")
+        val container = AppGraph.container
 
         val initialTaskId = intent.getLongExtra("task_id", -1L).takeIf { it != -1L }
         intent.removeExtra("task_id")
 
         setContent {
-            var settings by remember { mutableStateOf(Settings()) }
-            LaunchedEffect(container) {
-                container.settings.settings.collect { settings = it }
-            }
-            DenTheme(settings) {
-                MainGate(
-                    container = container,
-                    settings = settings,
-                    initialTaskId = initialTaskId,
-                    onInitialTaskHandled = { },
-                )
+            val context = LocalContext.current
+            val initCrash = remember { if (container == null) CrashReporter.consumeLast(context) else null }
+            if (container == null) {
+                DenTheme(Settings()) {
+                    SevereErrorScreen(initCrash)
+                }
+            } else {
+                var settings by remember { mutableStateOf(Settings()) }
+                LaunchedEffect(container) {
+                    container.settings.settings.collect { settings = it }
+                }
+                DenTheme(settings) {
+                    MainGate(
+                        container = container,
+                        settings = settings,
+                        initialTaskId = initialTaskId,
+                        onInitialTaskHandled = { },
+                    )
+                }
             }
         }
     }
@@ -110,39 +122,62 @@ private fun MainGate(
     val context = LocalContext.current
     var crashReport by rememberSaveable { mutableStateOf<String?>(CrashReporter.consumeLast(context)) }
     crashReport?.let { text ->
-        AlertDialog(
-            onDismissRequest = { crashReport = null },
-            title = { Text("Den crashed last time") },
-            text = {
-                SelectionContainer {
-                    Text(
-                        text,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 320.dp)
-                            .verticalScroll(rememberScrollState()),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        copyTextToClipboard(context, text)
-                        crashReport = null
-                    }
-                ) {
-                    Text("Copy")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { crashReport = null }) {
-                    Text("Dismiss")
-                }
-            },
+        CrashLogDialog(text = text, onDismissed = { crashReport = null })
+    }
+}
+
+@Composable
+private fun SevereErrorScreen(crashText: String?) {
+    val text = crashText
+        ?: "The app failed to start and captured no error details.\n\n" +
+            "If you see this message, try: Settings > Apps > Den > Clear data, then relaunch."
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center,
+    ) {
+        CrashLogDialog(
+            text = text,
+            onDismissed = { /* keep the stack visible until copied */ },
         )
     }
+}
+
+@Composable
+private fun CrashLogDialog(text: String, onDismissed: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismissed,
+        title = { Text("Den crashed last time") },
+        text = {
+            SelectionContainer {
+                Text(
+                    text,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    copyTextToClipboard(LocalContext.current, text)
+                    onDismissed()
+                }
+            ) {
+                Text("Copy")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissed) {
+                Text("Dismiss")
+            }
+        },
+    )
 }
 
 private fun copyTextToClipboard(context: Context, text: String) {
