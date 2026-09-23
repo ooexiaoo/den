@@ -2,6 +2,7 @@ package com.den.app.ui.nav
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
@@ -32,6 +33,7 @@ import androidx.navigation.navArgument
 import com.den.app.AppContainer
 import com.den.app.NavRequest
 import com.den.app.ui.components.LocalSnackbarHostState
+import com.den.app.ui.screens.CalendarScreen
 import com.den.app.ui.screens.CompletionScreen
 import com.den.app.ui.screens.HomeScreen
 import com.den.app.ui.screens.LabelDetailScreen
@@ -51,6 +53,7 @@ private object Routes {
     const val TASK_EDIT = "taskEdit?taskId={taskId}"
     const val COMPLETE = "complete/{taskId}"
     const val NOTES = "notes"
+    const val CALENDAR = "calendar"
     const val NOTE_EDIT = "noteEdit?noteId={noteId}"
     const val LABELS = "labels"
     const val LABEL_DETAIL = "label/{labelId}"
@@ -80,6 +83,7 @@ fun AppNav(
         BottomItem(Routes.HOME, Icons.Filled.Home, "Home"),
         BottomItem(Routes.TASKS, Icons.Filled.Checklist, "Tasks"),
         BottomItem(Routes.NOTES, Icons.Filled.Description, "Notes"),
+        BottomItem(Routes.CALENDAR, Icons.Filled.CalendarMonth, "Calendar"),
         BottomItem(Routes.MORE, Icons.Filled.MoreHoriz, "More"),
     )
     val showBottomBar = bottomItems.any { it.route == currentRoute }
@@ -195,6 +199,14 @@ fun AppNav(
                         container = container,
                         onOpenNote = { navController.navigate(Routes.noteEdit(it)) },
                         onNewNote = { navController.navigate(Routes.noteEdit(it)) },
+                    )
+                }
+                composable(Routes.CALENDAR) {
+                    CalendarScreen(
+                        container = container,
+                        onOpenTask = { navController.navigate(Routes.taskDetail(it)) },
+                        onNewTask = { navController.navigate(Routes.taskEdit(null)) },
+                        onCompleteTask = { navController.navigate(Routes.complete(it)) },
                     )
                 }
                 composable(
