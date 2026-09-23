@@ -174,12 +174,14 @@ fun FocusScreen(
                     animationSpec = tween(250),
                     label = "focusProgress",
                 )
+                val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                val progressColor = MaterialTheme.colorScheme.primary
                 Canvas(modifier = Modifier.size(300.dp)) {
                     val stroke = 12.dp.toPx()
                     val inset = stroke / 2
                     val arcSize = Size(size.width - stroke, size.height - stroke)
                     drawArc(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        color = trackColor,
                         startAngle = -90f,
                         sweepAngle = 360f,
                         useCenter = false,
@@ -188,7 +190,7 @@ fun FocusScreen(
                         style = Stroke(stroke, cap = StrokeCap.Round),
                     )
                     drawArc(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = progressColor,
                         startAngle = -90f,
                         sweepAngle = 360f * animatedProgress,
                         useCenter = false,
