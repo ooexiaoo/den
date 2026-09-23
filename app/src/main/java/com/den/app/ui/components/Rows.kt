@@ -49,11 +49,30 @@ fun TaskRow(
     onCheck: () -> Unit,
     onLongPress: (() -> Unit)? = null,
 ) {
-    Row(
+    TaskRowContent(
+        task = task,
+        labels = labels,
+        subtasksDone = subtasksDone,
+        subtasksTotal = subtasksTotal,
+        onCheck = onCheck,
         modifier = Modifier
-            .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .combinedClickable(onClick = onClick, onLongClick = onLongPress)
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress),
+    )
+}
+
+@Composable
+fun TaskRowContent(
+    task: Task,
+    labels: List<Label>,
+    subtasksDone: Int,
+    subtasksTotal: Int,
+    onCheck: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {

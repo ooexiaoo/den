@@ -57,7 +57,7 @@ import com.den.app.ui.components.EmptyState
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MonthCalendar
 import com.den.app.ui.components.SectionHeader
-import com.den.app.ui.components.TaskRow
+import com.den.app.ui.components.SwipeableTaskRow
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskFilter
 import com.den.app.ui.viewmodel.TaskListItem
@@ -297,16 +297,16 @@ fun TasksScreen(
                         contentPadding = PaddingValues(bottom = 96.dp),
                     ) {
                         items(dayTasks, key = { it.id }) { task ->
-                            TaskRow(
+                            SwipeableTaskRow(
                                 task = task,
                                 labels = labelMap[task.id] ?: emptyList(),
                                 subtasksDone = 0,
                                 subtasksTotal = 0,
                                 onClick = { onOpenTask(task.id) },
-                                onCheck = {
+                                onComplete = {
                                     if (task.completed) vm.uncomplete(task) else if (settings.ratingOnComplete) onCompleteTask(task.id) else vm.complete(task, null, null)
                                 },
-                                onLongPress = { menuItem = TaskListItem(task, 0, 0, labelMap[task.id] ?: emptyList()) },
+                                onOpenActions = { menuItem = TaskListItem(task, 0, 0, labelMap[task.id] ?: emptyList()) },
                             )
                         }
                     }
@@ -367,17 +367,17 @@ fun TasksScreen(
                                     text = bucketLabel(row.bucket),
                                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 2.dp),
                                 )
-                                is ListRow.Item -> TaskRow(
+                                is ListRow.Item -> SwipeableTaskRow(
                                     task = row.item.task,
                                     labels = row.item.labels,
                                     subtasksDone = row.item.done,
                                     subtasksTotal = row.item.total,
                                     onClick = { onOpenTask(row.item.task.id) },
-                                    onCheck = {
+                                    onComplete = {
                                         if (row.item.task.completed) vm.uncomplete(row.item.task)
                                         else if (settings.ratingOnComplete) onCompleteTask(row.item.task.id) else vm.complete(row.item.task, null, null)
                                     },
-                                    onLongPress = { menuItem = row.item },
+                                    onOpenActions = { menuItem = row.item },
                                 )
                             }
                         }
