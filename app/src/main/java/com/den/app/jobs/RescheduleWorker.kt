@@ -13,8 +13,7 @@ class RescheduleWorker(
     override suspend fun doWork(): Result {
         val container = AppGraph.container ?: return Result.success()
         return try {
-            val tasks = container.taskRepo.pendingReminderTasks()
-            tasks.forEach { container.reminderScheduler.schedule(it) }
+            container.reminderScheduler.rescheduleAll()
             Result.success()
         } catch (_: Exception) {
             Result.retry()

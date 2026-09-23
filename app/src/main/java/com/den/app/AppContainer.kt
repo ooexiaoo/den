@@ -77,6 +77,11 @@ class AppContainer(context: Context) {
             OneTimeWorkRequestBuilder<RescheduleWorker>().build(),
         )
         workManager.enqueueUniquePeriodicWork(
+            "reminder_repair",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<RescheduleWorker>(6, TimeUnit.HOURS).build(),
+        )
+        workManager.enqueueUniquePeriodicWork(
             "auto_backup",
             ExistingPeriodicWorkPolicy.UPDATE,
             PeriodicWorkRequestBuilder<BackupWorker>(15, TimeUnit.MINUTES).build(),

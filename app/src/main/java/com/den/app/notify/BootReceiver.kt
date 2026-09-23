@@ -3,16 +3,22 @@ package com.den.app.notify
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import com.den.app.jobs.RescheduleWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val request = OneTimeWorkRequestBuilder<RescheduleWorker>().build()
-        WorkManager.getInstance(context.applicationContext)
-            .enqueueUniqueWork("reschedule_reminders", ExistingWorkPolicy.REPLACE, request)
+        val pending = goAsync()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        scope.launch {
+            try {
+                ReminderScheduler(context.applicationContext).rescheduleAll()
+            } finally {
+                pending.finish()
+            }
+        }
     }
 }
