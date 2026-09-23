@@ -1,10 +1,12 @@
 package com.den.app.data.repo
 
 import com.den.app.data.db.LabelDao
+import com.den.app.data.db.IdCount
 import com.den.app.data.db.NoteDao
 import com.den.app.data.db.NoteTitleRow
 import com.den.app.data.model.Note
 import com.den.app.data.model.NoteLabelCrossRef
+import com.den.app.data.model.NoteLabelJoin
 import com.den.app.data.model.OwnerTypes
 import kotlinx.coroutines.flow.Flow
 
@@ -14,10 +16,16 @@ class NoteRepository(
 ) {
     fun observeActive(): Flow<List<Note>> = noteDao.observeActive()
 
+    fun observeArchived(): Flow<List<Note>> = noteDao.observeArchived()
+
     fun observeById(id: Long): Flow<Note?> = noteDao.observeById(id)
 
     fun observeBacklinks(noteId: Long): Flow<List<Note>> =
         noteDao.observeBacklinks("[[$noteId:")
+
+    fun observeBacklinkCounts(): Flow<List<IdCount>> = noteDao.observeBacklinkCounts()
+
+    fun observeNoteLabelJoins(): Flow<List<NoteLabelJoin>> = labelDao.observeNoteLabelJoins()
 
     suspend fun titleRows(): List<NoteTitleRow> = noteDao.titleRows()
 

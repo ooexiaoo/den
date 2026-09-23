@@ -109,6 +109,11 @@ data class TaskLabelJoin(
     @Embedded val label: Label,
 )
 
+data class NoteLabelJoin(
+    val noteId: Long,
+    @Embedded val label: Label,
+)
+
 object OwnerTypes {
     const val TASK = "task"
     const val NOTE = "note"

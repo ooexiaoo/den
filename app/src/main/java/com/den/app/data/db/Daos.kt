@@ -13,6 +13,7 @@ import com.den.app.data.model.Label
 import com.den.app.data.model.LabelWithCount
 import com.den.app.data.model.Note
 import com.den.app.data.model.NoteLabelCrossRef
+import com.den.app.data.model.NoteLabelJoin
 import com.den.app.data.model.Subtask
 import com.den.app.data.model.Task
 import com.den.app.data.model.TaskLabelCrossRef
@@ -23,6 +24,11 @@ import kotlinx.coroutines.flow.Flow
 data class NoteTitleRow(
     @androidx.room.ColumnInfo(name = "id") val id: Long,
     @androidx.room.ColumnInfo(name = "title") val title: String,
+)
+
+data class IdCount(
+    @androidx.room.ColumnInfo(name = "id") val id: Long,
+    @androidx.room.ColumnInfo(name = "cnt") val cnt: Int,
 )
 
 @Dao
@@ -65,6 +71,10 @@ interface TaskDao {
     @Transaction
     @Query("SELECT * FROM tasks WHERE archived = 0 ")
     fun observeAllWithSubtasks(): Flow<List<TaskWithSubtasks>>
+
+    @Transaction
+    @Query("SELECT * FROM tasks WHERE archived = 1 ORDER BY updatedAt DESC")
+    fun observeArchivedWithSubtasks(): Flow<List<TaskWithSubtasks>>
 
     @Transaction
     @Query("SELECT * FROM tasks WHERE id = :id")
@@ -136,6 +146,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE archived = 0 ORDER BY pinned DESC, updatedAt DESC")
     fun observeActive(): Flow<List<Note>>
 
+    @Query("SELECT * FROM notes WHERE archived = 1 ORDER BY updatedAt DESC")
+    fun observeArchived(): Flow<List<Note>>
+
     @Query("SELECT id, title FROM notes WHERE archived = 0 ORDER BY title COLLATE NOCASE ASC")
     suspend fun titleRows(): List<NoteTitleRow>
 
@@ -150,6 +163,13 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE archived = 0 AND body LIKE '%' || :token || '%' ORDER BY updatedAt DESC")
     fun observeBacklinks(token: String): Flow<List<Note>>
+
+    @Query(
+        "SELECT n.id AS id, COUNT(r.id) AS cnt FROM notes n " +
+            "LEFT JOIN notes r ON r.body LIKE '%' || '[[' || n.id || ':' || '%' " +
+            "WHERE n.archived = 0 GROUP BY n.id"
+    )
+    fun observeBacklinkCounts(): Flow<List<IdCount>>
 
     @Insert
     suspend fun insert(note: Note): Long
@@ -271,6 +291,12 @@ interface LabelDao {
     fun observeNoteLabels(noteId: Long): Flow<List<Label>>
 
     @Query(
+        "SELECT nl.noteId AS noteId, l.* FROM labels l INNER JOIN note_labels nl ON nl.labelId = l.id " +
+            "ORDER BY l.name COLLATE NOCASE ASC"
+    )
+    fun observeNoteLabelJoins(): Flow<List<NoteLabelJoin>>
+
+    @Query(
         "SELECT l.* FROM labels l INNER JOIN note_labels nl ON nl.labelId = l.id " +
             "WHERE nl.noteId = :noteId ORDER BY l.name COLLATE NOCASE ASC"
     )
@@ -295,6 +321,9 @@ interface AttachmentDao {
 
     @Query("SELECT * FROM attachments WHERE ownerType = :ownerType AND ownerId = :ownerId ORDER BY id DESC")
     fun observeForOwner(ownerType: String, ownerId: Long): Flow<List<Attachment>>
+
+    @Query("SELECT ownerId AS id, COUNT(*) AS cnt FROM attachments WHERE ownerType = :ownerType GROUP BY ownerId")
+    fun observeCountsByOwner(ownerType: String): Flow<List<IdCount>>
 
     @Query("SELECT * FROM attachments WHERE ownerType = :ownerType AND ownerId = :ownerId ORDER BY id DESC")
     suspend fun listForOwner(ownerType: String, ownerId: Long): List<Attachment>

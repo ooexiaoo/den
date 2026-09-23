@@ -14,11 +14,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+private val LINK_TOKEN = Regex("""\[\[(\d+):([^\]]*)\]\]""")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NoteEditViewModel(
@@ -62,6 +65,19 @@ class NoteEditViewModel(
     val backlinks: StateFlow<List<Note>> =
         _currentNoteId.flatMapLatest { id ->
             if (id == null) flowOf(emptyList()) else noteRepo.observeBacklinks(id)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val outLinks: StateFlow<List<NoteTitleRow>> =
+        combine(_body, _mentionTargets, _currentNoteId) { body, targets, selfId ->
+            val byId = targets.associateBy { it.id }
+            LINK_TOKEN.findAll(body)
+                .map { it.groupValues[1].toLong() to it.groupValues[2] }
+                .distinctBy { (id, _) -> id }
+                .mapNotNull { (id, tokenTitle) ->
+                    if (id == selfId) return@mapNotNull null
+                    val target = byId[id] ?: return@mapNotNull null
+                    NoteTitleRow(id, target.title.ifBlank { tokenTitle.ifBlank { "Untitled" } })
+                }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val attachments: StateFlow<List<Attachment>> =

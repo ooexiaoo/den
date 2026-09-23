@@ -146,6 +146,10 @@ fun CalendarScreen(
                 vm.reschedule(item.task, null)
                 menuItem = null
             },
+            onArchive = {
+                vm.archive(item.task)
+                menuItem = null
+            },
             onDelete = {
                 confirmDelete = item
                 menuItem = null

@@ -41,6 +41,7 @@ import com.den.app.ui.screens.LabelsScreen
 import com.den.app.ui.screens.MoreScreen
 import com.den.app.ui.screens.NoteEditScreen
 import com.den.app.ui.screens.NotesScreen
+import com.den.app.ui.screens.RoadmapScreen
 import com.den.app.ui.screens.SettingsScreen
 import com.den.app.ui.screens.TaskDetailScreen
 import com.den.app.ui.screens.TaskEditScreen
@@ -59,6 +60,7 @@ private object Routes {
     const val LABEL_DETAIL = "label/{labelId}"
     const val SETTINGS = "settings"
     const val MORE = "more"
+    const val ROADMAP = "roadmap/{slug}"
 
     fun taskDetail(id: Long) = "task/$id"
     fun taskEdit(id: Long?) = if (id == null) "taskEdit" else "taskEdit?taskId=$id"
@@ -250,6 +252,17 @@ fun AppNav(
                     MoreScreen(
                         onOpenLabels = { navController.navigate(Routes.LABELS) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                        onOpenRoadmap = { slug -> navController.navigate(Routes.ROADMAP.replace("{slug}", slug)) },
+                    )
+                }
+                composable(
+                    route = Routes.ROADMAP,
+                    arguments = listOf(navArgument("slug") { type = NavType.StringType }),
+                ) { entry ->
+                    val slug = requireNotNull(entry.arguments?.getString("slug"))
+                    RoadmapScreen(
+                        slug = slug,
+                        onBack = { navController.popBackStack() },
                     )
                 }
             }

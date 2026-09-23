@@ -94,6 +94,15 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
         .map { rows -> rows.map { it.task } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val archivedWithSubtasks: StateFlow<List<TaskWithSubtasks>> = taskRepo.observeArchivedWithSubtasks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val archivedRows: StateFlow<List<TaskListItem>> =
+        combine(archivedWithSubtasks, taskLabelJoins) { rows, joins ->
+            val labelsByTask = joins.groupBy({ it.taskId }, { it.label })
+            rows.map { row -> TaskListItem(row.task, row.doneCount, row.totalCount, labelsByTask[row.task.id] ?: emptyList()) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     fun setFilter(filter: TaskFilter) {
         _filter.value = filter
     }
@@ -112,6 +121,14 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
 
     fun reschedule(task: Task, dueAt: Long?) {
         viewModelScope.launch { taskRepo.update(task.copy(dueAt = dueAt)) }
+    }
+
+    fun archive(task: Task) {
+        viewModelScope.launch { taskRepo.setArchived(task, true) }
+    }
+
+    fun unarchive(task: Task) {
+        viewModelScope.launch { taskRepo.setArchived(task, false) }
     }
 
     fun delete(task: Task, onDeleted: suspend () -> Unit, onDeleteOwner: suspend (String, Long) -> Unit) {

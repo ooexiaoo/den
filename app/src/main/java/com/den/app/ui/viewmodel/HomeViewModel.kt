@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.den.app.AppContainer
 import com.den.app.data.model.Note
+import com.den.app.data.model.OwnerTypes
 import com.den.app.data.model.Task
 import com.den.app.data.model.TaskWithSubtasks
 import com.den.app.util.Dates
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -17,12 +19,25 @@ class HomeViewModel(container: AppContainer) : ViewModel() {
 
     private val taskRepo = container.taskRepo
     private val noteRepo = container.noteRepo
+    private val attachmentRepo = container.attachmentRepo
 
     private val allWithSubtasks: StateFlow<List<TaskWithSubtasks>> = taskRepo.observeAllWithSubtasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val notes: StateFlow<List<Note>> = noteRepo.observeActive()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val labelMap = noteRepo.observeNoteLabelJoins()
+        .map { joins -> joins.groupBy({ it.noteId }, { it.label }) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    private val backlinkCounts = noteRepo.observeBacklinkCounts()
+        .map { rows -> rows.associate { it.id to it.cnt } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    private val attachmentCounts = attachmentRepo.observeCountsByOwner(OwnerTypes.NOTE)
+        .map { rows -> rows.associate { it.id to it.cnt } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     private fun toItem(row: TaskWithSubtasks) = TaskListItem(row.task, row.doneCount, row.totalCount)
 
@@ -64,9 +79,21 @@ class HomeViewModel(container: AppContainer) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val recentNotes: StateFlow<List<Note>> = notes
-        .map { it.sortedByDescending { n -> n.updatedAt }.take(3) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val recentNotes: StateFlow<List<NoteListItem>> =
+        combine(notes, labelMap, backlinkCounts, attachmentCounts) { list, lm, bc, ac ->
+            list
+                .sortedByDescending { n -> n.updatedAt }
+                .take(3)
+                .map { n ->
+                    NoteListItem(
+                        note = n,
+                        labels = lm[n.id] ?: emptyList(),
+                        backlinkCount = bc[n.id] ?: 0,
+                        attachmentCount = ac[n.id] ?: 0,
+                    )
+                }
+        }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val dayProgress: StateFlow<Pair<Int, Int>> = allWithSubtasks
         .map { rows ->

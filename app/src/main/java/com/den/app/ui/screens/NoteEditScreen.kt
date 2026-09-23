@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -74,6 +75,7 @@ fun NoteEditScreen(
     val labels by vm.allLabels.collectAsState()
     val selectedLabels by vm.selectedLabels.collectAsState()
     val backlinks by vm.backlinks.collectAsState()
+    val outLinks by vm.outLinks.collectAsState()
     val attachments by vm.attachments.collectAsState()
 
     var showDelete by remember { mutableStateOf(false) }
@@ -174,20 +176,17 @@ fun NoteEditScreen(
                 onDelete = { attachment -> scope.launch { container.attachmentRepo.remove(attachment) } },
             )
 
+            if (outLinks.isNotEmpty()) {
+                SectionTitle("Links to")
+                outLinks.forEach { row ->
+                    LinkRow(title = row.title, onClick = { onOpenNote(row.id) })
+                }
+            }
+
             if (backlinks.isNotEmpty()) {
                 SectionTitle("Linked from")
                 backlinks.forEach { note ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().clickable { onOpenNote(note.id) }.padding(vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = note.title.ifBlank { "Untitled" },
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    LinkRow(title = note.title.ifBlank { "Untitled" }, onClick = { onOpenNote(note.id) })
                 }
             }
             Spacer(Modifier.height(32.dp))
@@ -223,6 +222,30 @@ fun NoteEditScreen(
 @Composable
 private fun SectionTitle(text: String) =
     SectionHeader(text, Modifier.padding(top = 20.dp, bottom = 8.dp))
+
+@Composable
+private fun LinkRow(
+    title: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
 
 private fun mentionMatches(
     targets: List<NoteTitleRow>,

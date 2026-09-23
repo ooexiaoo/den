@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,6 +55,9 @@ val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
 fun EmptyState(
     title: String,
     subtitle: String? = null,
+    icon: ImageVector = Icons.Outlined.Inbox,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -63,7 +69,7 @@ fun EmptyState(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Inbox,
+                    imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
@@ -84,6 +90,15 @@ fun EmptyState(
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            if (actionText != null && onAction != null) {
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = onAction,
+                    shape = RoundedCornerShape(24.dp),
+                ) {
+                    Text(actionText, style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }

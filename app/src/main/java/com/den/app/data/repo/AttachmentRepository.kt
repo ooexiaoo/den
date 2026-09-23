@@ -2,6 +2,7 @@ package com.den.app.data.repo
 
 import android.content.Context
 import com.den.app.data.db.AttachmentDao
+import com.den.app.data.db.IdCount
 import com.den.app.data.model.Attachment
 import kotlinx.coroutines.flow.Flow
 import java.io.File
@@ -20,6 +21,9 @@ class AttachmentRepository(context: Context, private val dao: AttachmentDao) {
 
     fun observeForOwner(ownerType: String, ownerId: Long): Flow<List<Attachment>> =
         dao.observeForOwner(ownerType, ownerId)
+
+    fun observeCountsByOwner(ownerType: String): Flow<List<IdCount>> =
+        dao.observeCountsByOwner(ownerType)
 
     suspend fun listForOwner(ownerType: String, ownerId: Long): List<Attachment> =
         dao.listForOwner(ownerType, ownerId)

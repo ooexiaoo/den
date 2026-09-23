@@ -21,6 +21,8 @@ class TaskRepository(
 
     fun observeAllWithSubtasks(): Flow<List<TaskWithSubtasks>> = taskDao.observeAllWithSubtasks()
 
+    fun observeArchivedWithSubtasks(): Flow<List<TaskWithSubtasks>> = taskDao.observeArchivedWithSubtasks()
+
     fun observeById(id: Long): Flow<Task?> = taskDao.observeById(id)
 
     fun observeWithSubtasks(id: Long): Flow<TaskWithSubtasks?> = taskDao.observeTaskWithSubtasks(id)

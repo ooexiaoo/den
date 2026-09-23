@@ -36,6 +36,7 @@ import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.SwipeableTaskRow
 import com.den.app.ui.components.TaskContextMenu
+import com.den.app.ui.components.TaskRow
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskFilter
 import com.den.app.ui.viewmodel.TaskListItem
@@ -68,6 +69,8 @@ private fun bucketLabel(bucket: TitleBucket): String = when (bucket) {
 private sealed interface ListRow {
     data class Header(val bucket: TitleBucket) : ListRow
     data class Item(val item: TaskListItem) : ListRow
+    data object ArchivedHeader : ListRow
+    data class ArchivedItem(val item: TaskListItem) : ListRow
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +87,7 @@ fun TasksScreen(
     val search by vm.search.collectAsState()
     val settings by vm.settings.collectAsState()
     val labelMap by vm.labelMap.collectAsState()
+    val archived by vm.archivedRows.collectAsState()
 
     var searching by remember { mutableStateOf(false) }
     var menuItem by remember { mutableStateOf<TaskListItem?>(null) }
@@ -155,11 +159,13 @@ fun TasksScreen(
                         TaskFilter.ALL -> "All clear — add your first task"
                     },
                     subtitle = if (search.isNotBlank()) "No results for \"$search\"" else "Tap + to create a task",
+                    actionText = if (search.isNotBlank()) null else "Add task",
+                    onAction = if (search.isNotBlank()) null else onNewTask,
                 )
             } else {
-                val rows = remember(tasks, filter) {
+                val rows = remember(tasks, archived, filter) {
                     if (filter == TaskFilter.ALL) {
-                        tasks
+                        val bucketed = tasks
                             .groupBy { bucketOf(it.task) }
                             .toSortedMap(compareBy { it.ordinal })
                             .flatMap { (bucket, items) ->
@@ -168,6 +174,10 @@ fun TasksScreen(
                                     addAll(items.map { ListRow.Item(it) })
                                 }
                             }
+                        if (archived.isEmpty()) bucketed else bucketed + buildList<ListRow> {
+                            add(ListRow.ArchivedHeader)
+                            addAll(archived.map { ListRow.ArchivedItem(it) })
+                        }
                     } else {
                         tasks.map { ListRow.Item(it) }
                     }
@@ -179,12 +189,18 @@ fun TasksScreen(
                             when (row) {
                                 is ListRow.Header -> "h-${row.bucket.name}"
                                 is ListRow.Item -> "t-${row.item.task.id}"
+                                ListRow.ArchivedHeader -> "archived-header"
+                                is ListRow.ArchivedItem -> "a-${row.item.task.id}"
                             }
                         },
                     ) { row ->
                         when (row) {
                             is ListRow.Header -> SectionHeader(
                                 text = bucketLabel(row.bucket),
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 2.dp),
+                            )
+                            ListRow.ArchivedHeader -> SectionHeader(
+                                text = "Archived",
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 2.dp),
                             )
                             is ListRow.Item -> SwipeableTaskRow(
@@ -198,6 +214,15 @@ fun TasksScreen(
                                     else if (settings.ratingOnComplete) onCompleteTask(row.item.task.id) else vm.complete(row.item.task, null, null)
                                 },
                                 onOpenActions = { menuItem = row.item },
+                            )
+                            is ListRow.ArchivedItem -> TaskRow(
+                                task = row.item.task,
+                                labels = row.item.labels,
+                                subtasksDone = row.item.done,
+                                subtasksTotal = row.item.total,
+                                onClick = { onOpenTask(row.item.task.id) },
+                                onCheck = {},
+                                onLongPress = { menuItem = row.item },
                             )
                         }
                     }
@@ -223,6 +248,16 @@ fun TasksScreen(
                 vm.reschedule(item.task, null)
                 menuItem = null
             },
+            onArchive = {
+                vm.archive(item.task)
+                menuItem = null
+            },
+            onRestore = if (item.task.archived) {
+                {
+                    vm.unarchive(item.task)
+                    menuItem = null
+                }
+            } else null,
             onDelete = {
                 confirmDelete = item
                 menuItem = null

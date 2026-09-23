@@ -152,6 +152,8 @@ fun TaskRowContent(
 fun NoteCard(
     note: com.den.app.data.model.Note,
     labels: List<Label>,
+    backlinks: Int = 0,
+    attachments: Int = 0,
     onClick: () -> Unit,
 ) {
     val accent = com.den.app.ui.theme.colorForIndex(note.colorIndex)
@@ -227,11 +229,25 @@ fun NoteCard(
                     LabelChipsRow(labels)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    text = com.den.app.util.Dates.formatDateShort(note.updatedAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = com.den.app.util.Dates.formatDateShort(note.updatedAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    val meta = buildList {
+                        if (backlinks > 0) add("$backlinks backlink${if (backlinks == 1) "" else "s"}")
+                        if (attachments > 0) add("$attachments attachment${if (attachments == 1) "" else "s"}")
+                    }.joinToString("  ·  ")
+                    if (meta.isNotEmpty()) {
+                        Text(
+                            text = meta,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        )
+                    }
+                }
             }
         }
     }

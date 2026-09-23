@@ -103,7 +103,7 @@ fun LabelDetailScreen(
                 items(notes, key = { it.id }) { note ->
                     NoteCard(
                         note = note,
-                        labels = emptyList(),
+                        labels = label?.let { listOf(it) } ?: emptyList(),
                         onClick = { onOpenNote(note.id) },
                     )
                 }

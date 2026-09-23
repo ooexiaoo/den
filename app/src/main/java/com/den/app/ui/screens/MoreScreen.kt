@@ -16,9 +16,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +40,7 @@ import com.den.app.ui.components.DenTopBar
 fun MoreScreen(
     onOpenLabels: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenRoadmap: (String) -> Unit,
 ) {
     Scaffold(
         topBar = { DenTopBar(title = "More") },
@@ -45,12 +52,48 @@ fun MoreScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             MoreRow(
+                icon = Icons.Filled.Inbox,
+                title = "Inbox",
+                subtitle = "One place for quick captures",
+                onClick = { onOpenRoadmap(RoadmapSections.INBOX) },
+            )
+            Spacer(Modifier.height(2.dp))
+            MoreRow(
+                icon = Icons.Filled.Folder,
+                title = "Projects",
+                subtitle = "Group work toward an outcome",
+                onClick = { onOpenRoadmap(RoadmapSections.PROJECTS) },
+            )
+            Spacer(Modifier.height(2.dp))
+            MoreRow(
+                icon = Icons.Filled.Hub,
+                title = "Graph",
+                subtitle = "See how everything connects",
+                onClick = { onOpenRoadmap(RoadmapSections.GRAPH) },
+            )
+            Spacer(Modifier.height(2.dp))
+            MoreRow(
+                icon = Icons.Filled.People,
+                title = "People",
+                subtitle = "Link people to their work",
+                onClick = { onOpenRoadmap(RoadmapSections.PEOPLE) },
+            )
+            Spacer(Modifier.height(2.dp))
+            MoreRow(
+                icon = Icons.Filled.EmojiEvents,
+                title = "Goals",
+                subtitle = "Track outcomes over time",
+                onClick = { onOpenRoadmap(RoadmapSections.GOALS) },
+            )
+            Spacer(Modifier.height(14.dp))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp))
+            MoreRow(
                 icon = Icons.Filled.Label,
                 title = "Labels",
                 subtitle = "Group tasks and notes with colors",
                 onClick = onOpenLabels,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(2.dp))
             MoreRow(
                 icon = Icons.Filled.Settings,
                 title = "Settings",

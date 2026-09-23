@@ -185,11 +185,13 @@ fun HomeScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }
-                    items(recentNotes, key = { "note-${it.id}" }) { note ->
+                    items(recentNotes, key = { "note-${it.note.id}" }) { item ->
                         NoteCard(
-                            note = note,
-                            labels = emptyList(),
-                            onClick = { onOpenNote(note.id) },
+                            note = item.note,
+                            labels = item.labels,
+                            backlinks = item.backlinkCount,
+                            attachments = item.attachmentCount,
+                            onClick = { onOpenNote(item.note.id) },
                         )
                     }
                 }
