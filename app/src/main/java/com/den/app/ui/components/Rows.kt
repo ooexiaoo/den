@@ -1,5 +1,10 @@
 package com.den.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,20 +23,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,26 +87,28 @@ fun TaskRowContent(
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Box(modifier = Modifier.clickable(onClick = onCheck).padding(top = 2.dp)) {
-            Icon(
-                imageVector = if (task.completed) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                contentDescription = if (task.completed) "Uncheck" else "Complete",
-                tint = if (task.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
-            )
-        }
+        AnimatedTaskCheck(
+            checked = task.completed,
+            onClick = onCheck,
+            modifier = Modifier.padding(top = 2.dp),
+        )
         Spacer(Modifier.width(13.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Top) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = if (task.completed) {
+                val titleColor by animateColorAsState(
+                    targetValue = if (task.completed) {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     },
+                    animationSpec = tween(220),
+                    label = "titleColor",
+                )
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = titleColor,
                     textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -259,4 +272,65 @@ private fun preview(body: String): String {
         .replace(Regex("^\\s*[-*]\\s+", RegexOption.MULTILINE), "")
         .trim()
     return clean
+}
+
+/** Circular task checkbox that springs in a fill and draws the check mark on completion. */
+@Composable
+fun AnimatedTaskCheck(
+    checked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val ringTint = MaterialTheme.colorScheme.onSurfaceVariant
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val strokeWidth = 2.dp
+
+    val progress by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
+        label = "taskCheckProgress",
+    )
+
+    Box(
+        modifier = modifier.size(22.dp).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val r = size.minDimension / 2f
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val fill = progress.coerceIn(0f, 1f)
+
+            drawCircle(
+                color = ringTint.copy(alpha = 0.55f),
+                radius = r - strokeWidth.toPx() / 2f,
+                center = center,
+                style = Stroke(width = strokeWidth.toPx()),
+            )
+            if (fill > 0f) {
+                drawCircle(
+                    color = primary,
+                    radius = (r - strokeWidth.toPx() / 2f) * fill,
+                    center = center,
+                )
+                val check = Path().apply {
+                    moveTo(center.x - r * 0.42f, center.y)
+                    lineTo(center.x - r * 0.10f, center.y + r * 0.40f)
+                    lineTo(center.x + r * 0.48f, center.y - r * 0.36f)
+                }
+                val measure = PathMeasure().apply { setPath(check, false) }
+                val dst = Path()
+                measure.getSegment(0f, measure.length * fill, dst, true)
+                drawPath(
+                    path = dst,
+                    color = onPrimary,
+                    style = Stroke(
+                        width = strokeWidth.toPx() * 1.25f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
+                    ),
+                )
+            }
+        }
+    }
 }
