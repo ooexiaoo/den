@@ -78,6 +78,7 @@ class NoteEditViewModel(
                     val target = byId[id] ?: return@mapNotNull null
                     NoteTitleRow(id, target.title.ifBlank { tokenTitle.ifBlank { "Untitled" } })
                 }
+                .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val attachments: StateFlow<List<Attachment>> =

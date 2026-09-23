@@ -55,23 +55,27 @@ class NotesViewModel(container: AppContainer) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val visibleNotes: StateFlow<List<NoteListItem>> =
-        combine(_search, _filter, allNotes, archivedNotes) { query, filter, active, archived ->
-            val q = query.trim()
-            val source = if (filter == NoteFilter.ARCHIVED) archived else active
-            source
-                .filter { n -> filter != NoteFilter.PINNED || n.pinned }
-                .filter { n -> q.isEmpty() || n.title.contains(q, ignoreCase = true) || n.body.contains(q, ignoreCase = true) }
-        }
-            .combine(labelMap, backlinkCounts, attachmentCounts) { base, lm, bc, ac ->
-                base.map { n ->
-                    NoteListItem(
-                        note = n,
-                        labels = lm[n.id] ?: emptyList(),
-                        backlinkCount = bc[n.id] ?: 0,
-                        attachmentCount = ac[n.id] ?: 0,
-                    )
-                }
+        combine(
+            combine(_search, _filter, allNotes, archivedNotes) { query, filter, active, archived ->
+                val q = query.trim()
+                val source = if (filter == NoteFilter.ARCHIVED) archived else active
+                source
+                    .filter { n -> filter != NoteFilter.PINNED || n.pinned }
+                    .filter { n -> q.isEmpty() || n.title.contains(q, ignoreCase = true) || n.body.contains(q, ignoreCase = true) }
+            },
+            labelMap,
+            backlinkCounts,
+            attachmentCounts,
+        ) { base, lm, bc, ac ->
+            base.map { n ->
+                NoteListItem(
+                    note = n,
+                    labels = lm[n.id] ?: emptyList(),
+                    backlinkCount = bc[n.id] ?: 0,
+                    attachmentCount = ac[n.id] ?: 0,
+                )
             }
+        }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setSearch(query: String) {
