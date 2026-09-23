@@ -131,6 +131,10 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
         viewModelScope.launch { taskRepo.setArchived(task, false) }
     }
 
+    fun duplicate(task: Task) {
+        viewModelScope.launch { taskRepo.duplicate(task) }
+    }
+
     fun delete(task: Task, onDeleted: suspend () -> Unit, onDeleteOwner: suspend (String, Long) -> Unit) {
         viewModelScope.launch {
             taskRepo.delete(task, onDeleteOwner)

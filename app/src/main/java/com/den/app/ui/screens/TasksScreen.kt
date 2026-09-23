@@ -80,6 +80,7 @@ fun TasksScreen(
     onOpenTask: (Long) -> Unit,
     onNewTask: () -> Unit,
     onCompleteTask: (Long) -> Unit,
+    onFocus: (Long) -> Unit,
 ) {
     val vm: TasksViewModel = viewModel(factory = DenViewModelFactory(container))
     val tasks by vm.visibleTasks.collectAsState()
@@ -239,6 +240,14 @@ fun TasksScreen(
             onEdit = {
                 menuItem = null
                 onOpenTask(item.task.id)
+            },
+            onFocus = {
+                menuItem = null
+                onFocus(item.task.id)
+            },
+            onDuplicate = {
+                vm.duplicate(item.task)
+                menuItem = null
             },
             onReschedule = { due ->
                 vm.reschedule(item.task, due)

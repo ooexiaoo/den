@@ -114,6 +114,32 @@ class TaskRepository(
         taskDao.setArchived(task.id, archived, System.currentTimeMillis())
     }
 
+    suspend fun duplicate(task: Task): Long {
+        val now = System.currentTimeMillis()
+        val newId = taskDao.insert(
+            task.copy(
+                id = 0,
+                completed = false,
+                completeRating = null,
+                completeReflection = null,
+                completedAt = null,
+                archived = false,
+                pinned = false,
+                createdAt = now,
+                updatedAt = now,
+                sortOrder = 0L,
+                reminderAt = null,
+            )
+        )
+        subtaskDao.listForTask(task.id).forEach { sub ->
+            subtaskDao.insert(sub.copy(id = 0, taskId = newId))
+        }
+        labelDao.labelsForTask(task.id).forEach { label ->
+            labelDao.insertTaskCrossRefs(listOf(TaskLabelCrossRef(newId, label.id)))
+        }
+        return newId
+    }
+
     suspend fun delete(task: Task, onDeleteOwner: suspend (String, Long) -> Unit) {
         reminderScheduler.cancel(task.id)
         onDeleteOwner(OwnerTypes.TASK, task.id)

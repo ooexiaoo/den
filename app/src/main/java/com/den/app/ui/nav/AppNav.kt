@@ -35,6 +35,7 @@ import com.den.app.NavRequest
 import com.den.app.ui.components.LocalSnackbarHostState
 import com.den.app.ui.screens.CalendarScreen
 import com.den.app.ui.screens.CompletionScreen
+import com.den.app.ui.screens.FocusScreen
 import com.den.app.ui.screens.HomeScreen
 import com.den.app.ui.screens.LabelDetailScreen
 import com.den.app.ui.screens.LabelsScreen
@@ -53,6 +54,7 @@ private object Routes {
     const val TASK_DETAIL = "task/{taskId}"
     const val TASK_EDIT = "taskEdit?taskId={taskId}"
     const val COMPLETE = "complete/{taskId}"
+    const val FOCUS = "focus/{taskId}"
     const val NOTES = "notes"
     const val CALENDAR = "calendar"
     const val NOTE_EDIT = "noteEdit?noteId={noteId}"
@@ -65,6 +67,7 @@ private object Routes {
     fun taskDetail(id: Long) = "task/$id"
     fun taskEdit(id: Long?) = if (id == null) "taskEdit" else "taskEdit?taskId=$id"
     fun complete(id: Long) = "complete/$id"
+    fun focus(id: Long) = "focus/$id"
     fun noteEdit(id: Long?) = if (id == null) "noteEdit" else "noteEdit?noteId=$id"
     fun labelDetail(id: Long) = "label/$id"
 }
@@ -154,6 +157,7 @@ fun AppNav(
                         onOpenTask = { navController.navigate(Routes.taskDetail(it)) },
                         onNewTask = { navController.navigate(Routes.taskEdit(null)) },
                         onCompleteTask = { navController.navigate(Routes.complete(it)) },
+                        onFocus = { navController.navigate(Routes.focus(it)) },
                     )
                 }
                 composable(
@@ -182,6 +186,19 @@ fun AppNav(
                         onBack = { navController.popBackStack() },
                         onEdit = { navController.navigate(Routes.taskEdit(id)) },
                         onComplete = { navController.navigate(Routes.complete(it)) },
+                        onFocus = { navController.navigate(Routes.focus(id)) },
+                    )
+                }
+                composable(
+                    route = Routes.FOCUS,
+                    arguments = listOf(navArgument("taskId") { type = NavType.LongType }),
+                ) { entry ->
+                    val id = requireNotNull(entry.arguments?.getLong("taskId"))
+                    FocusScreen(
+                        container = container,
+                        taskId = id,
+                        onBack = { navController.popBackStack() },
+                        onComplete = { navController.navigate(Routes.complete(it)) },
                     )
                 }
                 composable(
@@ -209,6 +226,7 @@ fun AppNav(
                         onOpenTask = { navController.navigate(Routes.taskDetail(it)) },
                         onNewTask = { navController.navigate(Routes.taskEdit(null)) },
                         onCompleteTask = { navController.navigate(Routes.complete(it)) },
+                        onFocus = { navController.navigate(Routes.focus(it)) },
                     )
                 }
                 composable(

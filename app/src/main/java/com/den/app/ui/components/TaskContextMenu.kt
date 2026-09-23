@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Unarchive
@@ -86,6 +88,8 @@ fun TaskContextMenu(
     onDismiss: () -> Unit,
     onToggleDone: () -> Unit,
     onEdit: () -> Unit,
+    onFocus: (() -> Unit)? = null,
+    onDuplicate: (() -> Unit)? = null,
     onReschedule: (Long) -> Unit,
     onClearDate: () -> Unit,
     onArchive: (() -> Unit)? = null,
@@ -113,6 +117,12 @@ fun TaskContextMenu(
                     ContextMenuRow(label = "Mark done", icon = Icons.Filled.Check, onAction = onToggleDone)
                 }
                 ContextMenuRow(label = "Edit", icon = Icons.Filled.Edit, onAction = onEdit)
+                onFocus?.let {
+                    ContextMenuRow(label = "Focus", icon = Icons.Filled.CenterFocusStrong, onAction = it)
+                }
+                onDuplicate?.let {
+                    ContextMenuRow(label = "Duplicate", icon = Icons.Filled.CopyAll, onAction = it)
+                }
                 onArchive?.let {
                     ContextMenuRow(label = "Archive", icon = Icons.Filled.Archive, onAction = it)
                 }

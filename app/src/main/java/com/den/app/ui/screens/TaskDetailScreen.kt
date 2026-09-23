@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
@@ -67,6 +68,7 @@ fun TaskDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onComplete: (Long) -> Unit,
+    onFocus: () -> Unit,
 ) {
     val vm: TaskDetailViewModel = viewModel(factory = DenViewModelFactory(container, id = taskId))
     val data by vm.withSubtasks.collectAsState()
@@ -242,6 +244,15 @@ fun TaskDetailScreen(
                     )
                 } else {
                     Spacer(Modifier.height(24.dp))
+                    DenButton(
+                        text = "Focus",
+                        onClick = onFocus,
+                        icon = Icons.Filled.CenterFocusStrong,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
+                    Spacer(Modifier.height(10.dp))
                     DenButton(
                         text = "Mark done",
                         onClick = {
