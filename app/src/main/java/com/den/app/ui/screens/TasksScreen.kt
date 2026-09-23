@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ViewList
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,13 +37,42 @@ import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.EmptyState
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MonthCalendar
+import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.TaskRow
 import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.TaskFilter
+import com.den.app.ui.viewmodel.TaskListItem
 import com.den.app.ui.viewmodel.TasksViewModel
 import com.den.app.util.Dates
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val DAY_MILLIS = 86_400_000L
+
+private enum class TitleBucket { OVERDUE, TODAY, TOMORROW, LATER, NO_DATE }
+
+private fun bucketOf(task: Task): TitleBucket {
+    val due = task.dueAt ?: return TitleBucket.NO_DATE
+    val today = Dates.startOfDay(Dates.now())
+    return when {
+        Dates.startOfDay(due) < today -> TitleBucket.OVERDUE
+        Dates.startOfDay(due) == today -> TitleBucket.TODAY
+        Dates.startOfDay(due) == today + DAY_MILLIS -> TitleBucket.TOMORROW
+        else -> TitleBucket.LATER
+    }
+}
+
+private fun bucketLabel(bucket: TitleBucket): String = when (bucket) {
+    TitleBucket.OVERDUE -> "Overdue"
+    TitleBucket.TODAY -> "Today"
+    TitleBucket.TOMORROW -> "Tomorrow"
+    TitleBucket.LATER -> "Later"
+    TitleBucket.NO_DATE -> "No date"
+}
+
+private sealed interface ListRow {
+    data class Header(val bucket: TitleBucket) : ListRow
+    data class Item(val item: TaskListItem) : ListRow
+}
+
 @Composable
 fun TasksScreen(
     container: AppContainer,
@@ -58,6 +86,7 @@ fun TasksScreen(
     val search by vm.search.collectAsState()
     val settings by vm.settings.collectAsState()
     val allTasks by vm.allTasks.collectAsState()
+    val labelMap by vm.labelMap.collectAsState()
 
     var searching by remember { mutableStateOf(false) }
     var calendarMode by remember { mutableStateOf(false) }
@@ -83,6 +112,7 @@ fun TasksScreen(
                     TaskFilter.ALL -> "All open"
                     TaskFilter.TODAY -> "Today"
                     TaskFilter.UPCOMING -> "Upcoming"
+                    TaskFilter.OVERDUE -> "Overdue"
                     TaskFilter.DONE -> "Completed"
                 },
                 titleContent = if (searching) {
@@ -144,7 +174,7 @@ fun TasksScreen(
                         items(dayTasks, key = { it.id }) { task ->
                             TaskRow(
                                 task = task,
-                                labels = emptyList(),
+                                labels = labelMap[task.id] ?: emptyList(),
                                 subtasksDone = 0,
                                 subtasksTotal = 0,
                                 onClick = { onOpenTask(task.id) },
@@ -161,6 +191,7 @@ fun TasksScreen(
                         ChipItem("Open", filter == TaskFilter.ALL) { vm.setFilter(TaskFilter.ALL) },
                         ChipItem("Today", filter == TaskFilter.TODAY) { vm.setFilter(TaskFilter.TODAY) },
                         ChipItem("Upcoming", filter == TaskFilter.UPCOMING) { vm.setFilter(TaskFilter.UPCOMING) },
+                        ChipItem("Overdue", filter == TaskFilter.OVERDUE) { vm.setFilter(TaskFilter.OVERDUE) },
                         ChipItem("Done", filter == TaskFilter.DONE) { vm.setFilter(TaskFilter.DONE) },
                     ),
                     modifier = Modifier
@@ -174,24 +205,54 @@ fun TasksScreen(
                             TaskFilter.DONE -> "No completed tasks yet"
                             TaskFilter.TODAY -> "Nothing due today"
                             TaskFilter.UPCOMING -> "Nothing scheduled"
+                            TaskFilter.OVERDUE -> "Nothing overdue — all clear"
                             TaskFilter.ALL -> "All clear — add your first task"
                         },
                         subtitle = if (search.isNotBlank()) "No results for \"$search\"" else "Tap + to create a task",
                     )
                 } else {
+                    val rows = remember(tasks, filter) {
+                        if (filter == TaskFilter.ALL) {
+                            tasks
+                                .groupBy { bucketOf(it.task) }
+                                .toSortedMap(compareBy { it.ordinal })
+                                .flatMap { (bucket, items) ->
+                                    buildList {
+                                        add(ListRow.Header(bucket))
+                                        addAll(items.map { ListRow.Item(it) })
+                                    }
+                                }
+                        } else {
+                            tasks.map { ListRow.Item(it) }
+                        }
+                    }
                     LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
-                        items(tasks, key = { it.task.id }) { item ->
-                            TaskRow(
-                                task = item.task,
-                                labels = emptyList(),
-                                subtasksDone = item.done,
-                                subtasksTotal = item.total,
-                                onClick = { onOpenTask(item.task.id) },
-                                onCheck = {
-                                    if (item.task.completed) vm.uncomplete(item.task)
-                                    else if (settings.ratingOnComplete) onCompleteTask(item.task.id) else vm.complete(item.task, null, null)
-                                },
-                            )
+                        items(
+                            items = rows,
+                            key = { row ->
+                                when (row) {
+                                    is ListRow.Header -> "h-${row.bucket.name}"
+                                    is ListRow.Item -> "t-${row.item.task.id}"
+                                }
+                            },
+                        ) { row ->
+                            when (row) {
+                                is ListRow.Header -> SectionHeader(
+                                    text = bucketLabel(row.bucket),
+                                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 2.dp),
+                                )
+                                is ListRow.Item -> TaskRow(
+                                    task = row.item.task,
+                                    labels = row.item.labels,
+                                    subtasksDone = row.item.done,
+                                    subtasksTotal = row.item.total,
+                                    onClick = { onOpenTask(row.item.task.id) },
+                                    onCheck = {
+                                        if (row.item.task.completed) vm.uncomplete(row.item.task)
+                                        else if (settings.ratingOnComplete) onCompleteTask(row.item.task.id) else vm.complete(row.item.task, null, null)
+                                    },
+                                )
+                            }
                         }
                     }
                 }

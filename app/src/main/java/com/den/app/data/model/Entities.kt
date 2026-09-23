@@ -104,6 +104,11 @@ data class LabelWithCount(
     val totalCount: Int,
 )
 
+data class TaskLabelJoin(
+    val taskId: Long,
+    @Embedded val label: Label,
+)
+
 object OwnerTypes {
     const val TASK = "task"
     const val NOTE = "note"

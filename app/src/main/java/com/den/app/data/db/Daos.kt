@@ -16,6 +16,7 @@ import com.den.app.data.model.NoteLabelCrossRef
 import com.den.app.data.model.Subtask
 import com.den.app.data.model.Task
 import com.den.app.data.model.TaskLabelCrossRef
+import com.den.app.data.model.TaskLabelJoin
 import com.den.app.data.model.TaskWithSubtasks
 import kotlinx.coroutines.flow.Flow
 
@@ -250,6 +251,12 @@ interface LabelDao {
             "WHERE tl.taskId = :taskId ORDER BY l.name COLLATE NOCASE ASC"
     )
     fun observeTaskLabels(taskId: Long): Flow<List<Label>>
+
+    @Query(
+        "SELECT tl.taskId AS taskId, l.* FROM labels l INNER JOIN task_labels tl ON tl.labelId = l.id " +
+            "ORDER BY l.name COLLATE NOCASE ASC"
+    )
+    fun observeTaskLabelJoins(): Flow<List<TaskLabelJoin>>
 
     @Query(
         "SELECT l.* FROM labels l INNER JOIN task_labels tl ON tl.labelId = l.id " +

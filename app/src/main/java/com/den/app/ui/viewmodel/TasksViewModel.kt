@@ -3,7 +3,9 @@ package com.den.app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.den.app.AppContainer
+import com.den.app.data.model.Label
 import com.den.app.data.model.Task
+import com.den.app.data.model.TaskLabelJoin
 import com.den.app.data.model.TaskWithSubtasks
 import com.den.app.settings.Settings
 import com.den.app.util.Dates
@@ -15,22 +17,27 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class TaskFilter { ALL, TODAY, UPCOMING, DONE }
+enum class TaskFilter { ALL, TODAY, UPCOMING, OVERDUE, DONE }
 
 data class TaskListItem(
     val task: Task,
     val done: Int,
     val total: Int,
+    val labels: List<Label> = emptyList(),
 )
 
 class TasksViewModel(container: AppContainer) : ViewModel() {
 
     private val taskRepo = container.taskRepo
+    private val labelRepo = container.labelRepo
 
     val settings: StateFlow<Settings> = container.settings.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings())
 
     private val allWithSubtasks: StateFlow<List<TaskWithSubtasks>> = taskRepo.observeAllWithSubtasks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val taskLabelJoins: StateFlow<List<TaskLabelJoin>> = labelRepo.observeTaskLabelJoins()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _filter = MutableStateFlow(TaskFilter.ALL)
@@ -39,21 +46,25 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
     val filter: StateFlow<TaskFilter> = _filter
     val search: StateFlow<String> = _search
 
+    val labelMap: StateFlow<Map<Long, List<Label>>> = taskLabelJoins
+        .map { joins -> joins.groupBy({ it.taskId }, { it.label }) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
     val visibleTasks: StateFlow<List<TaskListItem>> =
-        combine(allWithSubtasks, _filter, _search) { rows, filter, query ->
+        combine(allWithSubtasks, taskLabelJoins, _filter, _search) { rows, joins, filter, query ->
             val q = query.trim()
+            val labelsByTask = joins.groupBy({ it.taskId }, { it.label })
+            val today = Dates.startOfDay(Dates.now())
             rows
                 .asSequence()
                 .filter { row ->
                     val task = row.task
+                    val dueDay = task.dueAt?.let { Dates.startOfDay(it) }
                     when (filter) {
                         TaskFilter.ALL -> !task.completed
-                        TaskFilter.TODAY -> {
-                            !task.completed && (task.dueAt == null || Dates.startOfDay(task.dueAt) <= Dates.startOfDay(Dates.now()))
-                        }
-                        TaskFilter.UPCOMING -> {
-                            !task.completed && task.dueAt != null && Dates.startOfDay(task.dueAt) > Dates.startOfDay(Dates.now())
-                        }
+                        TaskFilter.TODAY -> !task.completed && dueDay == today
+                        TaskFilter.UPCOMING -> !task.completed && dueDay != null && dueDay > today
+                        TaskFilter.OVERDUE -> !task.completed && dueDay != null && dueDay < today
                         TaskFilter.DONE -> task.completed
                     }
                 }
@@ -68,7 +79,7 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
                         .thenByDescending { it.task.priority }
                         .thenByDescending { it.task.createdAt }
                 )
-                .map { TaskListItem(it.task, it.doneCount, it.totalCount) }
+                .map { row -> TaskListItem(row.task, row.doneCount, row.totalCount, labelsByTask[row.task.id] ?: emptyList()) }
                 .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

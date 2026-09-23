@@ -5,6 +5,7 @@ import com.den.app.data.model.Label
 import com.den.app.data.model.LabelWithCount
 import com.den.app.data.model.Note
 import com.den.app.data.model.Task
+import com.den.app.data.model.TaskLabelJoin
 import kotlinx.coroutines.flow.Flow
 
 class LabelRepository(private val labelDao: LabelDao) {
@@ -38,6 +39,8 @@ class LabelRepository(private val labelDao: LabelDao) {
     fun observeNotesForLabel(labelId: Long): Flow<List<Note>> = labelDao.observeNotesForLabel(labelId)
 
     fun observeTaskLabels(taskId: Long): Flow<List<Label>> = labelDao.observeTaskLabels(taskId)
+
+    fun observeTaskLabelJoins(): Flow<List<TaskLabelJoin>> = labelDao.observeTaskLabelJoins()
 
     fun observeNoteLabels(noteId: Long): Flow<List<Label>> = labelDao.observeNoteLabels(noteId)
 }
