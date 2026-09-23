@@ -43,6 +43,7 @@ import com.den.app.ui.screens.MoreScreen
 import com.den.app.ui.screens.NoteEditScreen
 import com.den.app.ui.screens.NotesScreen
 import com.den.app.ui.screens.RoadmapScreen
+import com.den.app.ui.screens.SearchScreen
 import com.den.app.ui.screens.SettingsScreen
 import com.den.app.ui.screens.TaskDetailScreen
 import com.den.app.ui.screens.TaskEditScreen
@@ -61,6 +62,7 @@ private object Routes {
     const val LABELS = "labels"
     const val LABEL_DETAIL = "label/{labelId}"
     const val SETTINGS = "settings"
+    const val SEARCH = "search"
     const val MORE = "more"
     const val ROADMAP = "roadmap/{slug}"
 
@@ -149,6 +151,7 @@ fun AppNav(
                         onNewTask = { navController.navigate(Routes.taskEdit(null)) },
                         onNewNote = { id -> navController.navigate(Routes.noteEdit(id)) },
                         onCompleteTask = { navController.navigate(Routes.complete(it)) },
+                        onOpenSearch = { navController.navigate(Routes.SEARCH) },
                     )
                 }
                 composable(Routes.TASKS) {
@@ -266,8 +269,17 @@ fun AppNav(
                         onBack = { navController.popBackStack() },
                     )
                 }
+                composable(Routes.SEARCH) {
+                    SearchScreen(
+                        container = container,
+                        onBack = { navController.popBackStack() },
+                        onOpenTask = { navController.navigate(Routes.taskDetail(it)) },
+                        onOpenNote = { navController.navigate(Routes.noteEdit(it)) },
+                    )
+                }
                 composable(Routes.MORE) {
                     MoreScreen(
+                        onOpenSearch = { navController.navigate(Routes.SEARCH) },
                         onOpenLabels = { navController.navigate(Routes.LABELS) },
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         onOpenRoadmap = { slug -> navController.navigate(Routes.ROADMAP.replace("{slug}", slug)) },

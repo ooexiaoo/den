@@ -14,6 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -51,6 +54,7 @@ fun HomeScreen(
     onNewTask: () -> Unit,
     onNewNote: (Long) -> Unit,
     onCompleteTask: (Long) -> Unit,
+    onOpenSearch: () -> Unit,
 ) {
     val vm: HomeViewModel = viewModel(factory = DenViewModelFactory(container))
     val todayRows by vm.todayRows.collectAsState()
@@ -77,7 +81,16 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = { DenTopBar(title = "Den") },
+        topBar = {
+            DenTopBar(
+                title = "Den",
+                actions = {
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                    }
+                },
+            )
+        },
     ) { padding ->
         if (todayRows.isEmpty() && upcomingRows.isEmpty() && recentNotes.isEmpty()) {
             EmptyState(

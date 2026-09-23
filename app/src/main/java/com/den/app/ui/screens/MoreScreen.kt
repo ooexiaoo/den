@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +39,7 @@ import com.den.app.ui.components.DenTopBar
 
 @Composable
 fun MoreScreen(
+    onOpenSearch: () -> Unit,
     onOpenLabels: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenRoadmap: (String) -> Unit,
@@ -87,6 +89,13 @@ fun MoreScreen(
             )
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp))
+            MoreRow(
+                icon = Icons.Filled.Search,
+                title = "Search",
+                subtitle = "Find any task or note",
+                onClick = onOpenSearch,
+            )
+            Spacer(Modifier.height(2.dp))
             MoreRow(
                 icon = Icons.Filled.Label,
                 title = "Labels",
