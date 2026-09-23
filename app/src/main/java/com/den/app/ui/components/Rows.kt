@@ -1,7 +1,9 @@
 package com.den.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -36,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.den.app.data.model.Label
 import com.den.app.data.model.Task
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskRow(
     task: Task,
@@ -44,12 +47,13 @@ fun TaskRow(
     subtasksTotal: Int,
     onClick: () -> Unit,
     onCheck: () -> Unit,
+    onLongPress: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {

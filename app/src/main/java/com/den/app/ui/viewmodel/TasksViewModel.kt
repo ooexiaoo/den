@@ -109,4 +109,15 @@ class TasksViewModel(container: AppContainer) : ViewModel() {
     fun uncomplete(task: Task) {
         viewModelScope.launch { taskRepo.uncomplete(task) }
     }
+
+    fun reschedule(task: Task, dueAt: Long?) {
+        viewModelScope.launch { taskRepo.update(task.copy(dueAt = dueAt)) }
+    }
+
+    fun delete(task: Task, onDeleted: suspend () -> Unit, onDeleteOwner: suspend (String, Long) -> Unit) {
+        viewModelScope.launch {
+            taskRepo.delete(task, onDeleteOwner)
+            onDeleted()
+        }
+    }
 }

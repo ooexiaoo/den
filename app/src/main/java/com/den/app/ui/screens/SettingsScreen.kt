@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,8 +35,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,6 +57,7 @@ import com.den.app.ui.components.ColorPickerDialog
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.LocalSnackbarHostState
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.paletteColors
 import com.den.app.ui.theme.PALETTES
@@ -69,7 +67,6 @@ import com.den.app.util.Dates
 import com.den.app.util.Fmt
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     container: AppContainer,
@@ -120,14 +117,13 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
+            DenTopBar(
+                title = "Settings",
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
