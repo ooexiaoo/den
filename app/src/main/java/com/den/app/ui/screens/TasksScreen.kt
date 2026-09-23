@@ -217,7 +217,7 @@ fun TasksScreen(
                                 .groupBy { bucketOf(it.task) }
                                 .toSortedMap(compareBy { it.ordinal })
                                 .flatMap { (bucket, items) ->
-                                    buildList {
+                                    buildList<ListRow> {
                                         add(ListRow.Header(bucket))
                                         addAll(items.map { ListRow.Item(it) })
                                     }
