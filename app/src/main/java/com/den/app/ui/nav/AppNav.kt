@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Label
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,8 +33,10 @@ import com.den.app.AppContainer
 import com.den.app.NavRequest
 import com.den.app.ui.components.LocalSnackbarHostState
 import com.den.app.ui.screens.CompletionScreen
+import com.den.app.ui.screens.HomeScreen
 import com.den.app.ui.screens.LabelDetailScreen
 import com.den.app.ui.screens.LabelsScreen
+import com.den.app.ui.screens.MoreScreen
 import com.den.app.ui.screens.NoteEditScreen
 import com.den.app.ui.screens.NotesScreen
 import com.den.app.ui.screens.SettingsScreen
@@ -43,6 +45,7 @@ import com.den.app.ui.screens.TaskEditScreen
 import com.den.app.ui.screens.TasksScreen
 
 private object Routes {
+    const val HOME = "home"
     const val TASKS = "tasks"
     const val TASK_DETAIL = "task/{taskId}"
     const val TASK_EDIT = "taskEdit?taskId={taskId}"
@@ -52,6 +55,7 @@ private object Routes {
     const val LABELS = "labels"
     const val LABEL_DETAIL = "label/{labelId}"
     const val SETTINGS = "settings"
+    const val MORE = "more"
 
     fun taskDetail(id: Long) = "task/$id"
     fun taskEdit(id: Long?) = if (id == null) "taskEdit" else "taskEdit?taskId=$id"
@@ -73,10 +77,10 @@ fun AppNav(
     val currentRoute = backStackEntry?.destination?.route
 
     val bottomItems = listOf(
+        BottomItem(Routes.HOME, Icons.Filled.Home, "Home"),
         BottomItem(Routes.TASKS, Icons.Filled.Checklist, "Tasks"),
         BottomItem(Routes.NOTES, Icons.Filled.Description, "Notes"),
-        BottomItem(Routes.LABELS, Icons.Filled.Label, "Labels"),
-        BottomItem(Routes.SETTINGS, Icons.Filled.Settings, "Settings"),
+        BottomItem(Routes.MORE, Icons.Filled.MoreHoriz, "More"),
     )
     val showBottomBar = bottomItems.any { it.route == currentRoute }
 
@@ -109,7 +113,7 @@ fun AppNav(
                                 selected = currentRoute == item.route,
                                 onClick = {
                                     navController.navigate(item.route) {
-                                        popUpTo(Routes.TASKS) { saveState = true }
+                                        popUpTo(Routes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -125,9 +129,19 @@ fun AppNav(
         ) { padding ->
             NavHost(
                 navController = navController,
-                startDestination = Routes.TASKS,
+                startDestination = Routes.HOME,
                 modifier = Modifier.padding(padding),
             ) {
+                composable(Routes.HOME) {
+                    HomeScreen(
+                        container = container,
+                        onOpenTask = { navController.navigate(Routes.taskDetail(it)) },
+                        onOpenNote = { navController.navigate(Routes.noteEdit(it)) },
+                        onNewTask = { navController.navigate(Routes.taskEdit(null)) },
+                        onNewNote = { id -> navController.navigate(Routes.noteEdit(id)) },
+                        onCompleteTask = { navController.navigate(Routes.complete(it)) },
+                    )
+                }
                 composable(Routes.TASKS) {
                     TasksScreen(
                         container = container,
@@ -218,6 +232,12 @@ fun AppNav(
                     SettingsScreen(
                         container = container,
                         onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.MORE) {
+                    MoreScreen(
+                        onOpenLabels = { navController.navigate(Routes.LABELS) },
+                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     )
                 }
             }

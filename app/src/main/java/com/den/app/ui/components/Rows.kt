@@ -2,10 +2,9 @@ package com.den.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -28,13 +26,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.den.app.data.model.Label
 import com.den.app.data.model.Task
-import com.den.app.util.Dates
 
 @Composable
 fun TaskRow(
@@ -45,67 +44,62 @@ fun TaskRow(
     onClick: () -> Unit,
     onCheck: () -> Unit,
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(modifier = Modifier.clickable(onClick = onCheck).padding(top = 2.dp)) {
-                Icon(
-                    imageVector = if (task.completed) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = if (task.completed) "Uncheck" else "Complete",
-                    tint = if (task.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
+        Box(modifier = Modifier.clickable(onClick = onCheck).padding(top = 2.dp)) {
+            Icon(
+                imageVector = if (task.completed) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                contentDescription = if (task.completed) "Uncheck" else "Complete",
+                tint = if (task.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Spacer(Modifier.width(13.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = if (task.completed) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                PriorityDot(task.priority, modifier = Modifier.padding(top = 8.dp))
+                if (task.pinned) {
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.Filled.PushPin,
+                        contentDescription = "Pinned",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(15.dp).padding(top = 8.dp),
+                    )
+                }
+            }
+            DueChip(task, modifier = Modifier.padding(top = 4.dp))
+            if (subtasksTotal > 0) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "$subtasksDone/$subtasksTotal subtasks",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.Top) {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (task.completed) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                        textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    PriorityDot(task.priority, modifier = Modifier.padding(top = 6.dp))
-                    if (task.pinned) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Filled.PushPin,
-                            contentDescription = "Pinned",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp).padding(top = 2.dp),
-                        )
-                    }
-                }
-                DueChip(task, modifier = Modifier.padding(top = 4.dp))
-                if (subtasksTotal > 0) {
-                    Spacer(Modifier.height(8.dp))
-                    SubtaskProgress(subtasksTotal, subtasksDone)
-                }
-                if (labels.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    LabelChipsRow(labels)
-                }
+            if (labels.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                LabelChipsRow(labels, modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -122,15 +116,15 @@ fun NoteCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (accent == androidx.compose.ui.graphics.Color.Transparent) {
-                MaterialTheme.colorScheme.surface
+            containerColor = if (accent == Color.Transparent) {
+                MaterialTheme.colorScheme.surfaceContainerHigh
             } else {
-                androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surface, accent, 0.06f)
+                androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surfaceContainerHigh, accent, 0.07f)
             },
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
@@ -143,7 +137,7 @@ fun NoteCard(
                     .fillMaxHeight()
                     .width(4.dp)
                     .background(
-                        color = if (accent == androidx.compose.ui.graphics.Color.Transparent) {
+                        color = if (accent == Color.Transparent) {
                             MaterialTheme.colorScheme.surfaceVariant
                         } else {
                             accent.copy(alpha = 0.6f)
@@ -191,7 +185,7 @@ fun NoteCard(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = Dates.formatDateShort(note.updatedAt),
+                    text = com.den.app.util.Dates.formatDateShort(note.updatedAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 )

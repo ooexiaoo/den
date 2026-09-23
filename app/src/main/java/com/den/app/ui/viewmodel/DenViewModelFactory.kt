@@ -14,6 +14,7 @@ class DenViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         val viewModel: ViewModel = when {
+            modelClass.isAssignableFrom(HomeViewModel::class.java) -> HomeViewModel(container)
             modelClass.isAssignableFrom(TasksViewModel::class.java) -> TasksViewModel(container)
             modelClass.isAssignableFrom(TaskEditViewModel::class.java) -> TaskEditViewModel(container, id)
             modelClass.isAssignableFrom(TaskDetailViewModel::class.java) -> TaskDetailViewModel(container, id ?: -1L)

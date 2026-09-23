@@ -24,8 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.data.model.Note
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.EmptyState
 import com.den.app.ui.components.NoteCard
 import com.den.app.ui.viewmodel.DenViewModelFactory
@@ -65,9 +64,11 @@ fun NotesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    if (searching) {
+            DenTopBar(
+                title = "Notes",
+                subtitle = if (pinnedOnly) "Pinned only" else "All notes",
+                titleContent = if (searching) {
+                    {
                         OutlinedTextField(
                             value = search,
                             onValueChange = vm::setSearch,
@@ -75,10 +76,8 @@ fun NotesScreen(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                    } else {
-                        Text("Notes")
                     }
-                },
+                } else null,
                 actions = {
                     IconButton(onClick = { searching = !searching; if (!searching) vm.setSearch("") }) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
@@ -91,7 +90,6 @@ fun NotesScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         floatingActionButton = {

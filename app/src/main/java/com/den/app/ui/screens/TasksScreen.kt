@@ -22,8 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.data.model.Task
 import com.den.app.ui.components.ChipItem
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.EmptyState
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MonthCalendar
@@ -78,9 +77,16 @@ fun TasksScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    if (searching) {
+            DenTopBar(
+                title = "Tasks",
+                subtitle = when (filter) {
+                    TaskFilter.ALL -> "All open"
+                    TaskFilter.TODAY -> "Today"
+                    TaskFilter.UPCOMING -> "Upcoming"
+                    TaskFilter.DONE -> "Completed"
+                },
+                titleContent = if (searching) {
+                    {
                         OutlinedTextField(
                             value = search,
                             onValueChange = vm::setSearch,
@@ -88,10 +94,8 @@ fun TasksScreen(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                    } else {
-                        Text("Den")
                     }
-                },
+                } else null,
                 actions = {
                     IconButton(onClick = { calendarMode = !calendarMode; searching = false; vm.setSearch("") }) {
                         Icon(
@@ -105,9 +109,6 @@ fun TasksScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
             )
         },
         floatingActionButton = {
