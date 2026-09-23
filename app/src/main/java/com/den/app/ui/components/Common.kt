@@ -147,6 +147,37 @@ fun PriorityDot(priority: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun PriorityPill(priority: Int, modifier: Modifier = Modifier) {
+    val label = when (priority) {
+        1 -> "LOW"
+        2 -> "MEDIUM"
+        3 -> "HIGH"
+        else -> return
+    }
+    val color = when (priority) {
+        3 -> MaterialTheme.colorScheme.error
+        2 -> Color(0xFFE6A23C)
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    Box(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp).background(color, CircleShape))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
 fun DueChip(task: Task, modifier: Modifier = Modifier) {
     val due = task.dueAt ?: return
     val overdue = !task.completed && Dates.isOverdue(due)
@@ -197,10 +228,10 @@ fun LabelPill(label: Label, modifier: Modifier = Modifier) {
             .padding(horizontal = 10.dp, vertical = 3.dp),
     ) {
         Text(
-            text = label.name,
-            style = MaterialTheme.typography.labelMedium,
+            text = label.name.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
             color = if (base == Color.Transparent) MaterialTheme.colorScheme.onSurfaceVariant else textColor,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

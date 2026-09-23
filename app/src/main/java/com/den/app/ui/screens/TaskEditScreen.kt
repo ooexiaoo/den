@@ -1,5 +1,6 @@
 package com.den.app.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,8 +38,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -49,11 +49,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.den.app.AppContainer
 import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorDot
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.paletteColors
@@ -82,11 +84,12 @@ fun TaskEditScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (taskId == null) "New task" else "Edit task") },
+            DenTopBar(
+                title = if (taskId == null) "New task" else "Edit task",
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -102,7 +105,6 @@ fun TaskEditScreen(
                         Icon(Icons.Filled.Check, contentDescription = "Save")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -146,37 +148,6 @@ fun TaskEditScreen(
                 }
             }
 
-            SectionLabel("Reminder")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Remind me", style = MaterialTheme.typography.bodyMedium)
-                    if (ui.hasReminder && ui.reminderAt != null) {
-                        Text(
-                            Dates.formatDateTime(ui.reminderAt!!),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
-                Switch(
-                    checked = ui.hasReminder,
-                    onCheckedChange = { on ->
-                        if (on) {
-                            val due = ui.dueAt
-                            val base = due?.let { it - 10 * 60 * 1000L } ?: (System.currentTimeMillis() + 30 * 60 * 1000L)
-                            vm.onReminderSet(base)
-                            showReminderPicker = true
-                        } else {
-                            vm.onReminderClear()
-                        }
-                    },
-                )
-            }
-
             SectionLabel("Priority")
             FilterChipRow(
                 items = listOf(
@@ -186,21 +157,6 @@ fun TaskEditScreen(
                     ChipItem("High", ui.priority == 3) { vm.setPriority(3) },
                 ),
             )
-
-            SectionLabel("Color")
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                paletteColors.forEachIndexed { index, color ->
-                    ColorDot(
-                        color = color,
-                        selected = ui.colorIndex == index,
-                        onClick = { vm.setColor(if (ui.colorIndex == index) null else index) },
-                        modifier = Modifier.size(26.dp),
-                    )
-                }
-            }
 
             SectionLabel("Labels")
             if (labels.isEmpty()) {
@@ -221,50 +177,120 @@ fun TaskEditScreen(
                 )
             }
 
-            SectionLabel("Subtasks")
-            ui.subtasks.forEach { sub ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Checkbox(
-                        checked = sub.done,
-                        onCheckedChange = { vm.toggleSubtaskDone(sub.id, it) },
-                    )
-                    Text(
-                        text = sub.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f),
-                        color = if (sub.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                    )
-                    IconButton(onClick = { vm.reorderSubtask(sub.id, -1) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Up", modifier = Modifier.size(18.dp))
-                    }
-                    IconButton(onClick = { vm.reorderSubtask(sub.id, 1) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Down", modifier = Modifier.size(18.dp))
-                    }
-                    IconButton(onClick = { vm.removeSubtask(sub) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Remove", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-            var newSubtask by remember { mutableStateOf("") }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = newSubtask,
-                    onValueChange = { newSubtask = it },
-                    placeholder = { Text("Add subtask") },
-                    singleLine = true,
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable { showAdvanced = !showAdvanced }
+                    .padding(vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (showAdvanced) "Hide options" else "More options",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(
-                    onClick = {
-                        vm.addSubtaskLocally(newSubtask)
-                        newSubtask = ""
-                    },
-                    enabled = newSubtask.isNotBlank(),
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add subtask")
-                }
+                Icon(
+                    imageVector = if (showAdvanced) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(4.dp))
+
+            if (showAdvanced) {
+                SectionLabel("Reminder")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Remind me", style = MaterialTheme.typography.bodyMedium)
+                        if (ui.hasReminder && ui.reminderAt != null) {
+                            Text(
+                                Dates.formatDateTime(ui.reminderAt!!),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = ui.hasReminder,
+                        onCheckedChange = { on ->
+                            if (on) {
+                                val due = ui.dueAt
+                                val base = due?.let { it - 10 * 60 * 1000L } ?: (System.currentTimeMillis() + 30 * 60 * 1000L)
+                                vm.onReminderSet(base)
+                                showReminderPicker = true
+                            } else {
+                                vm.onReminderClear()
+                            }
+                        },
+                    )
+                }
+
+                SectionLabel("Color")
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    paletteColors.forEachIndexed { index, color ->
+                        ColorDot(
+                            color = color,
+                            selected = ui.colorIndex == index,
+                            onClick = { vm.setColor(if (ui.colorIndex == index) null else index) },
+                            modifier = Modifier.size(26.dp),
+                        )
+                    }
+                }
+
+                SectionLabel("Subtasks")
+                ui.subtasks.forEach { sub ->
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Checkbox(
+                            checked = sub.done,
+                            onCheckedChange = { vm.toggleSubtaskDone(sub.id, it) },
+                        )
+                        Text(
+                            text = sub.title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                            color = if (sub.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        )
+                        IconButton(onClick = { vm.reorderSubtask(sub.id, -1) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Up", modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = { vm.reorderSubtask(sub.id, 1) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Down", modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = { vm.removeSubtask(sub) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Remove", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+                var newSubtask by remember { mutableStateOf("") }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = newSubtask,
+                        onValueChange = { newSubtask = it },
+                        placeholder = { Text("Add subtask") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        onClick = {
+                            vm.addSubtaskLocally(newSubtask)
+                            newSubtask = ""
+                        },
+                        enabled = newSubtask.isNotBlank(),
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add subtask")
+                    }
+                }
+                Spacer(Modifier.height(32.dp))
+            }
         }
     }
 

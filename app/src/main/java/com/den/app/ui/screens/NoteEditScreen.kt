@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,8 +30,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,6 +49,7 @@ import com.den.app.ui.components.AttachedMediaGrid
 import com.den.app.ui.components.ChipItem
 import com.den.app.ui.components.ColorPickerDialog
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.FilterChipRow
 import com.den.app.ui.components.MediaPickerBar
 import com.den.app.ui.components.SectionHeader
@@ -59,7 +57,6 @@ import com.den.app.ui.viewmodel.DenViewModelFactory
 import com.den.app.ui.viewmodel.NoteEditViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteEditScreen(
     container: AppContainer,
@@ -86,8 +83,8 @@ fun NoteEditScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (currentId == null) "New note" else "Note") },
+            DenTopBar(
+                title = if (currentId == null) "New note" else "Note",
                 navigationIcon = {
                     IconButton(onClick = onDone) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -113,7 +110,6 @@ fun NoteEditScreen(
                         Icon(Icons.Filled.Check, contentDescription = "Done")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->

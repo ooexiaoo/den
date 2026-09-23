@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
@@ -21,16 +22,12 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,9 +47,12 @@ import com.den.app.data.model.OwnerTypes
 import com.den.app.data.model.Task
 import com.den.app.ui.components.AttachedMediaGrid
 import com.den.app.ui.components.ConfirmDialog
+import com.den.app.ui.components.DenButton
+import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.DueChip
 import com.den.app.ui.components.LabelChipsRow
 import com.den.app.ui.components.MediaPickerBar
+import com.den.app.ui.components.PriorityPill
 import com.den.app.ui.components.SectionHeader
 import com.den.app.ui.components.SubtaskProgress
 import com.den.app.ui.viewmodel.DenViewModelFactory
@@ -60,7 +60,6 @@ import com.den.app.ui.viewmodel.TaskDetailViewModel
 import com.den.app.util.Dates
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
     container: AppContainer,
@@ -86,8 +85,8 @@ fun TaskDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Task") },
+            DenTopBar(
+                title = "Task",
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -110,7 +109,6 @@ fun TaskDetailScreen(
                         Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -124,13 +122,23 @@ fun TaskDetailScreen(
             if (task != null) {
                 Text(
                     text = task.title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                     color = if (task.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 )
                 DueChip(task, Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(8.dp))
-                LabelChipsRow(labels, Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PriorityPill(task.priority)
+                    if (labels.isNotEmpty()) {
+                        LabelChipsRow(labels, Modifier.weight(1f))
+                    }
+                }
 
                 val total = data?.totalCount ?: 0
                 if (total > 0) {
@@ -225,15 +233,17 @@ fun TaskDetailScreen(
                         onDelete = { attachment -> scope.launch { container.attachmentRepo.remove(attachment) } },
                     )
                     Spacer(Modifier.height(24.dp))
-                    FilledTonalButton(
+                    DenButton(
+                        text = "Reopen task",
                         onClick = { vm.uncomplete() },
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    ) {
-                        Text("Reopen task")
-                    }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
                 } else {
                     Spacer(Modifier.height(24.dp))
-                    FilledTonalButton(
+                    DenButton(
+                        text = "Mark done",
                         onClick = {
                             if (settings?.ratingOnComplete == true) {
                                 onComplete(task.id)
@@ -241,10 +251,11 @@ fun TaskDetailScreen(
                                 vm.complete(null, null)
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    ) {
-                        Text("Mark done")
-                    }
+                        icon = Icons.Filled.Check,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
                 }
             }
         }
