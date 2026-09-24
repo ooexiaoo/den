@@ -24,6 +24,7 @@ class DenViewModelFactory(
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> SettingsViewModel(container)
             modelClass.isAssignableFrom(LabelsViewModel::class.java) -> LabelsViewModel(container)
             modelClass.isAssignableFrom(LabelDetailViewModel::class.java) -> LabelDetailViewModel(container, labelId ?: -1L)
+            modelClass.isAssignableFrom(ReviewViewModel::class.java) -> ReviewViewModel(container)
             else -> error("Unknown ViewModel class: ${modelClass.name}")
         }
         return viewModel as T

@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Inbox
@@ -26,6 +29,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -42,15 +46,30 @@ fun MoreScreen(
     onOpenSearch: () -> Unit,
     onOpenLabels: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenReview: () -> Unit,
     onOpenRoadmap: (String) -> Unit,
 ) {
     Scaffold(
-        topBar = { DenTopBar(title = "More") },
+        topBar = {
+            DenTopBar(
+                title = "More",
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+            )
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             MoreRow(
@@ -89,6 +108,13 @@ fun MoreScreen(
             )
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(modifier = Modifier.padding(horizontal = 2.dp, vertical = 6.dp))
+            MoreRow(
+                icon = Icons.Filled.EventNote,
+                title = "Review",
+                subtitle = "A daily check-in of what matters",
+                onClick = onOpenReview,
+            )
+            Spacer(Modifier.height(2.dp))
             MoreRow(
                 icon = Icons.Filled.Search,
                 title = "Search",

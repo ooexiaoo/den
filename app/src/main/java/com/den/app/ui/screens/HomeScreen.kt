@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +35,6 @@ import com.den.app.settings.Settings
 import com.den.app.ui.components.DenButton
 import com.den.app.ui.components.DenCard
 import com.den.app.ui.components.DenProgress
-import com.den.app.ui.components.DenTopBar
 import com.den.app.ui.components.EmptyState
 import com.den.app.ui.components.NoteCard
 import com.den.app.ui.components.SectionHeader
@@ -80,18 +80,7 @@ fun HomeScreen(
             "${ld.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())} ${ld.dayOfMonth}"
     }
 
-    Scaffold(
-        topBar = {
-            DenTopBar(
-                title = "Den",
-                actions = {
-                    IconButton(onClick = onOpenSearch) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
-                    }
-                },
-            )
-        },
-    ) { padding ->
+    Scaffold { padding ->
         if (todayRows.isEmpty() && upcomingRows.isEmpty() && recentNotes.isEmpty()) {
             EmptyState(
                 title = "Your world is quiet",
@@ -108,6 +97,7 @@ fun HomeScreen(
                         greeting = greeting,
                         dateLabel = dateLabel,
                         openCount = openCount,
+                        onOpenSearch = onOpenSearch,
                     )
                 }
 
@@ -218,25 +208,36 @@ private fun Greeting(
     greeting: String,
     dateLabel: String,
     openCount: Int,
+    onOpenSearch: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        Text(
-            text = dateLabel.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            letterSpacing = 0.8.sp,
-        )
-        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = dateLabel.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 0.8.sp,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onOpenSearch) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
         Text(
             text = "$greeting.",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
         val message = when {
             openCount == 0 -> "All caught up — enjoy the calm."
             openCount == 1 -> "1 task still open."

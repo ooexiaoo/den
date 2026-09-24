@@ -1,27 +1,28 @@
 package com.den.app.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +34,10 @@ import androidx.compose.ui.unit.sp
 import com.den.app.ui.theme.DenSpacing
 
 /**
- * Editorial top bar: big screen title with an optional eyebrow subtitle.
- * Pass [titleContent] to fully replace the title (e.g. an inline search field).
+ * Compact editorial header: single-line title (optionally with an eyebrow
+ * subtitle), back action on the left, custom actions on the right.
+ * Slimmer than the stock M3 top bar to keep vertical space for content.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DenTopBar(
     title: String,
@@ -46,13 +47,28 @@ fun DenTopBar(
     actions: @Composable RowScope.() -> Unit = {},
     titleContent: (@Composable () -> Unit)? = null,
 ) {
-    TopAppBar(
-        modifier = modifier,
-        title = {
-            if (titleContent != null) {
-                titleContent()
-            } else {
-                Column {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (navigationIcon != null) {
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    navigationIcon()
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+            ) {
+                if (titleContent != null) {
+                    titleContent()
+                } else {
                     if (subtitle != null) {
                         Text(
                             text = subtitle.uppercase(),
@@ -64,20 +80,15 @@ fun DenTopBar(
                     }
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                     )
                 }
             }
-        },
-        navigationIcon = { navigationIcon?.invoke() },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.background,
-        ),
-    )
+            actions()
+        }
+    }
 }
 
 /** Quiet container for grouped content — the primary building block instead of shadowed cards. */

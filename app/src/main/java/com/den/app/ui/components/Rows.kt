@@ -21,6 +21,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -294,10 +298,16 @@ fun AnimatedTaskCheck(
     )
 
     Box(
-        modifier = modifier.size(22.dp).clickable(onClick = onClick),
+        modifier = modifier
+            .size(48.dp)
+            .semantics {
+                role = Role.Checkbox
+                stateDescription = if (checked) "Completed" else "Not completed"
+            }
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier.size(22.dp)) {
             val r = size.minDimension / 2f
             val center = Offset(size.width / 2f, size.height / 2f)
             val fill = progress.coerceIn(0f, 1f)
