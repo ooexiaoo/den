@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -113,6 +114,7 @@ private data class CreateOption(
 /** Switch from a bottom bar to a side rail once the window gets roomy. */
 private const val TABLET_BREAKPOINT_DP = 840
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNav(
     container: AppContainer,
